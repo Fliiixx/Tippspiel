@@ -7,7 +7,7 @@ import { PersistedData } from '../models';
 @Injectable({ providedIn: 'root' })
 export class StorageService {
   private http = inject(HttpClient);
-  private baseUrl = 'https://tippspiel-udjn.onrender.com';
+  private baseUrl = 'https://tippspiel-udjn.onrender.com/api';
 
 
 
