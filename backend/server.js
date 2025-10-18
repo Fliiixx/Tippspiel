@@ -10,7 +10,7 @@ app.use(express.json());
 
 // Datenbankverbindung aufbauen
 const dbPromise = open({
-  filename: './data/database.sqlite',
+  filename: '/data/database.sqlite',
   driver: sqlite3.Database,
 });
 
