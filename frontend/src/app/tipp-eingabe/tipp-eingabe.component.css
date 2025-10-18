@@ -1,0 +1,7 @@
+textarea, input {
+  border-radius: 0.25rem;
+  border: 1px solid #ccc;
+}
+button:hover {
+  opacity: 0.9;
+}
