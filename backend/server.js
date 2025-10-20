@@ -8,70 +8,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Datenbankverbindung aufbauen
-const dbPromise = open({
-  filename: '/data/database.sqlite',
-  driver: sqlite3.Database,
-});
-
-// Sicherstellen, dass die Tabelle existiert
-(async () => {
-  const db = await dbPromise;
-  await db.exec(`
-    CREATE TABLE IF NOT EXISTS game_data (
-      id INTEGER PRIMARY KEY CHECK (id = 1),
-      data TEXT NOT NULL
-    );
-  `);
-})();
-
-// Endpunkt zum Laden der Daten
-app.get('/api/data', async (req, res) => {
-  try {
-    const db = await dbPromise;
-    const result = await db.get('SELECT data FROM game_data WHERE id = 1');
-    if (result) {
-      res.json(JSON.parse(result.data));
-    } else {
-      res.json({ runden: [], rangliste: [] });
-    }
-  } catch (e) {
-    console.error('Failed to load data from DB', e);
-    res.status(500).json({ error: 'Failed to load data' });
-  }
-});
-
-// Endpunkt zum Speichern der Daten
-app.post('/api/data', async (req, res) => {
-  try {
-    const db = await dbPromise;
-    const dataToSave = JSON.stringify(req.body);
-    await db.run(
-      'INSERT INTO game_data (id, data) VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET data = excluded.data',
-      dataToSave
-    );
-    res.status(200).json({ message: 'Data saved successfully' });
-  } catch (e) {
-    console.error('Failed to save data to DB', e);
-    res.status(500).json({ error: 'Failed to save data' });
-  }
-});
-
-// Endpunkt zum Zurücksetzen der Daten
-app.delete('/api/data', async (req, res) => {
-  try {
-    const db = await dbPromise;
-    await db.run('DELETE FROM game_data WHERE id = 1');
-    res.status(200).json({ message: 'Data reset successfully' });
-  } catch (e) {
-    console.error('Failed to reset data in DB', e);
-    res.status(500).json({ error: 'Failed to reset data' });
-  }
-});
 
 // === Datenbank ===
 const db = await open({
-    filename: "./database.sqlite",
+    filename: "/data/database.sqlite",
     driver: sqlite3.Database,
 });
 
