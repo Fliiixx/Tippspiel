@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Runde, Tipp, PersistedData, Spieler } from '../models';
+import { Tipp, PersistedData } from '../models';
 import { StorageService } from '../services/storage.service';
 import {DecimalPipe, NgForOf, NgIf} from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -211,5 +211,14 @@ export class TippEingabeComponent implements OnInit {
     });
   }
 
+  async ausZwischenablageEinfuegen() {
+    try {
+      const text = await navigator.clipboard.readText();
+      this.tippText = text;
+    } catch (err) {
+      console.error('Fehler beim Lesen der Zwischenablage:', err);
+      alert('Konnte nicht aus der Zwischenablage lesen. Bitte manuell einfügen (Strg+V).');
+    }
+  }
 
 }
