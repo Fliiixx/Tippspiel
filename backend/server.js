@@ -2,11 +2,30 @@ import express from 'express';
 import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
 import cors from 'cors';
+import path from "path";
+import { fileURLToPath } from "url";
+
+
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+// Aktueller Pfad ermitteln (nur nötig bei ES modules)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Route zum Download der Datenbank
+app.get("/download-db", (req, res) => {
+  const filePath = "/data/database.sqlite"; // Pfad auf Render
+  res.download(filePath, "database.sqlite", (err) => {
+    if (err) {
+      console.error("Download-Fehler:", err);
+      res.status(500).send("Fehler beim Download");
+    }
+  });
+});
 
 
 // === Datenbank ===
