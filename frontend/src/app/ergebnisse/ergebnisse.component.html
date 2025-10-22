@@ -1,145 +1,245 @@
-<div class="mb-8 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-  <h1 class="text-4xl font-extrabold text-gray-800">Ergebnisse</h1>
+<!-- Google Font Import und globale Styles -->
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;700;900&display=swap');
 
-  <div class="flex items-center gap-3">
-    <label for="saison-select" class="text-sm font-medium text-gray-600">
-      Season {{aktuelleSaison}}:
-    </label>
+  /* Definiert einen "Glow"-Effekt für Text im FOE-Stil */
+  .text-shadow-glow {
+    text-shadow: 0 0 8px rgba(218, 165, 32, 0.8), 0 0 15px rgba(255, 215, 0, 0.5);
+  }
 
-    <div class="relative">
-      <select
-        id="saison-select"
-        [(ngModel)]="aktuelleSaison"
-        (change)="ladeSaison(aktuelleSaison)"
-        class="appearance-none w-full md:w-auto bg-white border border-gray-300 text-gray-700 py-2 pl-3 pr-8 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-      >
-        <option *ngFor="let saison of alleSaisons" [value]="saison">
-          {{ getSaisonDatumsrahmen(saison) }}
-        </option>
-      </select>
-      <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-          <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
-        </svg>
-      </div>
-    </div>
-  </div>
-</div>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+  /* Scrollbar-Styling für einen mittelalterlichen Look */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #2c1810;
+    border: 1px solid #8b4513;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #8b4513 0%, #654321 100%);
+    border-radius: 6px;
+    border: 2px solid #2c1810;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #a0522d 0%, #8b4513 100%);
+  }
 
-  <div>
-    <div *ngIf="daten.rangliste.length > 0; else keineRangliste"
-         class="bg-white shadow-lg rounded-xl border border-gray-200 overflow-hidden">
+  /* Verbesserte Lesbarkeit für Text */
+  .content-wrapper {
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+  }
 
-      <div class="px-4 py-8 bg-gray-50 border-b border-gray-200">
+  /* Stärkerer Kontrast für Tabellentexte */
+  table tbody tr {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95);
+  }
 
+  /* Bessere Lesbarkeit für Header-Texte */
+  h1, h3 {
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9), 0 0 20px rgba(218, 165, 32, 0.6);
+  }
 
-          <div class="text-center">
-            <h3 class="text-xl font-bold text-indigo-700">
-              Gesamtrangliste
-            </h3>
-        </div>
-      </div>
+  /* Pergament-Effekt für Cards */
+  .parchment-card {
+    background: linear-gradient(135deg, rgba(60, 40, 25, 0.85) 0%, rgba(45, 30, 20, 0.9) 100%);
+    border: 2px solid rgba(139, 69, 19, 0.6);
+    box-shadow:
+      0 4px 20px rgba(0, 0, 0, 0.5),
+      inset 0 1px 0 rgba(218, 165, 32, 0.2);
+  }
 
-      <div class="p-6">
-        <div class="max-h-105 overflow-y-auto">
-          <table class="w-full text-left">
-            <thead class="sticky top-0 bg-gray-50 z-10">
-            <tr>
-              <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Platz</th>
-              <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-              <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Punkte</th>
-              <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Abw.</th>
-            </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-            <tr *ngFor="let spieler of daten.rangliste; let i = index"
-                [class.bg-gradient-to-r]="i === 0 || i === 1 || i === 2"
+  /* Goldener Glanz für Buttons */
+  .gold-button {
+    background: linear-gradient(180deg, #daa520 0%, #b8860b 100%);
+    border: 2px solid #8b6914;
+    box-shadow:
+      0 2px 8px rgba(218, 165, 32, 0.4),
+      inset 0 1px 0 rgba(255, 215, 0, 0.3);
+  }
 
-                [class.from-yellow-50]="i === 0"
-                [class.to-yellow-200]="i === 0"
-                [class.text-yellow-900]="i === 0"
-                [class.font-medium]="i === 0"
+  .gold-button:hover:not(:disabled) {
+    background: linear-gradient(180deg, #ffd700 0%, #daa520 100%);
+    box-shadow:
+      0 4px 15px rgba(218, 165, 32, 0.6),
+      inset 0 1px 0 rgba(255, 215, 0, 0.5);
+  }
 
-                [class.from-gray-50]="i === 1"
-                [class.to-gray-200]="i === 1"
-                [class.text-gray-800]="i === 1"
+  .gold-button:disabled {
+    background: linear-gradient(180deg, #5a4a2a 0%, #3d2f1a 100%);
+    border-color: #4a3a1a;
+    box-shadow: none;
+  }
 
-                [class.from-orange-50]="i === 2"
-                [class.to-orange-200]="i === 2"
-                [class.text-orange-800]="i === 2"
-            >
-              <td class="px-4 py-3 whitespace-nowrap w-16 font-semibold">{{ i + 1 }}.</td>
-              <td class="px-4 py-3 whitespace-nowrap font-medium text-gray-900">{{ spieler.name }}</td>
-              <td class="px-4 py-3 whitespace-nowrap text-gray-600 text-right">{{ spieler.gesamtpunkte }}</td>
-              <td class="px-4 py-3 whitespace-nowrap text-gray-600 text-right">{{ spieler.gesamtabweichung | number:'1.1-1' }}</td>
-            </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-    <ng-template #keineRangliste>
-      <p class="text-gray-500 italic">Noch keine Ranglistendaten vorhanden.</p>
-    </ng-template>
-  </div>
-  <div>
-    <div *ngIf="angezeigteRunde; else keineRunden"
-         class="bg-white shadow-lg rounded-xl border border-gray-200 overflow-hidden">
+  /* Ornamentale Trennlinien */
+  .ornamental-divider {
+    height: 2px;
+    background: linear-gradient(90deg, transparent 0%, rgba(218, 165, 32, 0.6) 50%, transparent 100%);
+  }
 
-      <div class="p-4 bg-gray-50 border-b border-gray-200">
-        <div class="flex justify-between items-center">
-          <button (click)="vorherigeRunde()"
-                  [disabled]="angezeigteRundeIndex <= 0"
-                  class="px-4 py-2 bg-indigo-600 text-white rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 disabled:bg-gray-300 disabled:shadow-none disabled:cursor-not-allowed transition-colors">
-            &larr;
-          </button>
+</style>
 
-          <div class="text-center">
-            <h3 class="text-xl font-bold text-indigo-700">
-              Runde {{ angezeigteRundeIndex + 1 }}
-            </h3>
-            <p class="text-lg font-semibold text-gray-800 mt-1">
-              Gewinnzahl: {{ angezeigteRunde.gewinnzahl }}
-            </p>
+<!-- Hauptcontainer mit FOE-Stil -->
+<div class="font-['Exo_2'] text-amber-50">
+
+  <!-- Inhalt -->
+  <div class="content-wrapper p-3">
+    <!-- Header: Titel und Saison-Auswahl -->
+    <div class="mb-4 flex flex-col md:flex-row md:justify-between md:items-center gap-6">
+      <div></div>
+      <div class="flex items-center gap-3">
+        <label for="saison-select" class="text-sm font-medium text-amber-100">
+          Season {{aktuelleSaison}}:
+        </label>
+        <div class="relative">
+          <select
+            id="saison-select"
+            [(ngModel)]="aktuelleSaison"
+            (change)="ladeSaison(aktuelleSaison)"
+            class="appearance-none w-full md:w-auto bg-amber-950/80 border-2 border-amber-700/70 text-amber-100 py-2 pl-4 pr-10 rounded-lg shadow-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-300 cursor-pointer"
+          >
+            <option *ngFor="let saison of alleSaisons" [value]="saison" class="bg-amber-950 text-amber-100">
+              {{ getSaisonDatumsrahmen(saison) }}
+            </option>
+          </select>
+          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-amber-400">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
           </div>
-
-          <button (click)="naechsteRunde()"
-                  [disabled]="angezeigteRundeIndex >= daten.runden.length - 1"
-                  class="px-4 py-2 bg-indigo-600 text-white rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 disabled:bg-gray-300 disabled:shadow-none disabled:cursor-not-allowed transition-colors">
-            &rarr;
-          </button>
-        </div>
-      </div>
-
-      <div class="p-6">
-        <div class="max-h-105 overflow-y-auto"> <table class="w-full text-left">
-          <thead class="sticky top-0 bg-gray-50 z-10">
-          <tr>
-            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Platz</th>
-            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-            <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Tipp</th>
-            <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Abw.</th>
-            <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Punkte</th>
-          </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-          <tr *ngFor="let tipp of angezeigteRunde.tipps"
-              [ngClass]="{'bg-green-50': tipp.platz === 1}">
-            <td class="px-4 py-3 whitespace-nowrap w-16 font-semibold">{{ tipp.platz }}.</td>
-            <td class="px-4 py-3 whitespace-nowrap font-medium text-gray-900">{{ tipp.name }}</td>
-            <td class="px-4 py-3 whitespace-nowrap text-gray-600 text-right">{{ tipp.zahl }}</td>
-            <td class="px-4 py-3 whitespace-nowrap text-gray-600 text-right">{{ tipp.abweichung | number:'1.1-1' }}</td>
-            <td class="px-4 py-3 whitespace-nowrap text-gray-600 text-right font-medium">{{ tipp.punkte }}</td>
-          </tr>
-          </tbody>
-        </table>
         </div>
       </div>
     </div>
 
-    <ng-template #keineRunden>
-      <p class="text-gray-500 italic">Noch keine Runden gespielt.</p>
-    </ng-template>
+    <!-- Hauptinhalt: Rangliste und Runden in einem Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+      <!-- Gesamtrangliste Card -->
+      <div>
+        <div *ngIf="daten.rangliste.length > 0; else keineRangliste"
+             class="parchment-card rounded-2xl shadow-2xl overflow-hidden">
+          <div class="px-4 py-2.5 border-b-2 border-amber-700/50 text-center bg-gradient-to-b from-amber-900/50 to-transparent">
+            <div class="ornamental-divider mb-3"></div>
+            <h3 class="text-3xl font-bold text-amber-300 tracking-wide text-shadow-glow">
+              ⚔️ Gesamtrangliste ⚔️
+            </h3>
+            <div class="ornamental-divider mt-3"></div>
+          </div>
+          <div class="p-2 sm:p-4">
+            <div class="max-h-115 overflow-y-auto">
+              <table class="w-full text-left">
+                <thead class="sticky top-0 bg-amber-950/95 backdrop-blur-sm z-10">
+                <tr>
+                  <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-amber-300 uppercase tracking-widest">Platz</th>
+                  <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-amber-300 uppercase tracking-widest">Name</th>
+                  <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-amber-300 uppercase tracking-widest">Punkte</th>
+                  <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-amber-300 uppercase tracking-widest">Abw.</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-amber-800/40">
+                <tr *ngFor="let spieler of daten.rangliste; let i = index"
+                    class="hover:bg-amber-900/40 transition-colors duration-200 text-amber-50"
+                    [class.font-bold]="i === 0"
+                    [class.font-semibold]="i === 1 || i === 2"
+                    [class.bg-gradient-to-r]="i === 0 || i === 1 || i === 2"
+                    [class.from.yellow.600]="i === 0"
+                    [class.to-yellow-700]="i === 0"
+                    [class.text-yellow-200]="i === 0"
+                    [class.border-l-4]="i === 0 || i === 1 || i === 2"
+                    [class.border-yellow-500]="i === 0"
+                    [class.from.gray.400]="i === 1"
+                    [class.to-gray-500]="i === 1"
+                    [class.text-gray-200]="i === 1"
+                    [class.border-gray-400]="i === 1"
+                    [class.from.orange.700]="i === 2"
+                    [class.to-orange-800]="i === 2"
+                    [class.text-orange-300]="i === 2"
+                    [class.border-orange-600]="i === 2">
+                  <td class="px-4 py-3 whitespace-nowrap w-16">
+                    <span *ngIf="i === 0">🏆</span>
+                    <span *ngIf="i > 0">{{ i + 1 }}.</span>
+                  </td>
+                  <td class="px-4 py-3 whitespace-nowrap">{{ spieler.name }}</td>
+                  <td class="px-4 py-3 whitespace-nowrap text-right font-semibold">{{ spieler.gesamtpunkte }}</td>
+                  <td class="px-4 py-3 whitespace-nowrap text-right">{{ spieler.gesamtabweichung | number:'1.1-1' }}</td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <ng-template #keineRangliste>
+          <div class="parchment-card rounded-2xl p-10 text-center">
+            <p class="italic text-amber-300 text-lg">📜 Noch keine Ranglistendaten vorhanden.</p>
+          </div>
+        </ng-template>
+      </div>
+
+      <!-- Runden-Details Card -->
+      <div>
+        <div *ngIf="angezeigteRunde; else keineRunden"
+             class="parchment-card rounded-2xl shadow-2xl overflow-hidden">
+          <div class="p-4 border-b-2 border-amber-700/50 bg-gradient-to-b from-amber-900/50 to-transparent">
+            <div class="flex justify-between items-center gap-4">
+              <!-- Button "Vorherige Runde" -->
+              <button (click)="vorherigeRunde()" [disabled]="angezeigteRundeIndex <= 0"
+                      class="gold-button p-2 aspect-square text-amber-950 rounded-lg transition-all duration-300
+                                 focus:enabled:outline-none focus:enabled:ring-2 focus:enabled:ring-amber-400
+                                 disabled:text-amber-800 disabled:cursor-not-allowed">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+              </button>
+
+              <div class="text-center">
+                <div class="ornamental-divider mb-2"></div>
+                <h3 class="text-xl font-bold text-amber-100 tracking-wide"><span class="text-yellow-300 text-2xl">Runde {{ angezeigteRundeIndex + 1 }}</span> - Gewinnzahl: <span class="text-yellow-300">{{ angezeigteRunde.gewinnzahl }}</span></h3>
+                <div class="ornamental-divider mt-2"></div>
+              </div>
+
+              <!-- Button "Nächste Runde" -->
+              <button (click)="naechsteRunde()" [disabled]="angezeigteRundeIndex >= daten.runden.length - 1"
+                      class="gold-button p-2 aspect-square text-amber-950 rounded-lg transition-all duration-300
+                                 focus:enabled:outline-none focus:enabled:ring-2 focus:enabled:ring-amber-400
+                                 disabled:text-amber-800 disabled:cursor-not-allowed">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+              </button>
+            </div>
+          </div>
+          <div class="p-2 sm:p-4">
+            <div class="max-h-115 overflow-y-auto">
+              <table class="w-full text-left">
+                <thead class="sticky top-0 bg-amber-950/95 backdrop-blur-sm z-10">
+                <tr>
+                  <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-amber-300 uppercase tracking-widest">Platz</th>
+                  <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-amber-300 uppercase tracking-widest">Name</th>
+                  <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-amber-300 uppercase tracking-widest">Tipp</th>
+                  <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-amber-300 uppercase tracking-widest">Abw.</th>
+                  <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-amber-300 uppercase tracking-widest">Punkte</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-amber-800/40">
+                <tr *ngFor="let tipp of angezeigteRunde.tipps"
+                    class="hover:bg-amber-900/40 transition-colors duration-200 text-amber-50"
+                    [ngClass]="{'bg-green-500/25 text-green-200': tipp.platz === 1}">
+                  <td class="px-4 py-3 whitespace-nowrap w-16 font-semibold">
+                    <span *ngIf="tipp.platz === 1">🥇</span>
+                    <span *ngIf="tipp.platz > 1">{{ tipp.platz }}.</span>
+                  </td>
+                  <td class="px-4 py-3 whitespace-nowrap">{{ tipp.name }}</td>
+                  <td class="px-4 py-3 whitespace-nowrap text-right">{{ tipp.zahl }}</td>
+                  <td class="px-4 py-3 whitespace-nowrap text-right">{{ tipp.abweichung | number:'1.1-1' }}</td>
+                  <td class="px-4 py-3 whitespace-nowrap text-right font-medium">{{ tipp.punkte }}</td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <ng-template #keineRunden>
+          <div class="parchment-card rounded-2xl p-10 text-center">
+            <p class="italic text-amber-300 text-lg">📜 Noch keine Runden gespielt.</p>
+          </div>
+        </ng-template>
+      </div>
+    </div>
   </div>
 </div>
