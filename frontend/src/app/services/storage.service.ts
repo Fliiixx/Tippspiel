@@ -4,17 +4,14 @@ import { Observable, of, from } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { PersistedData } from '../models';
 import { initializeApp } from 'firebase/app';
-import { getDatabase, ref, get, set, remove } from 'firebase/database';
-import { getAuth, signInAnonymously } from 'firebase/auth';
+import { getDatabase, ref, get, set, remove, child } from 'firebase/database';
 
 @Injectable({ providedIn: 'root' })
 export class StorageService {
   private http = inject(HttpClient);
   private db: any;
-  private auth: any;
-  private isAuthenticated = false;
 
-  // Firebase Konfiguration
+  // Firebase Konfiguration (aus Firebase Console)
   private firebaseConfig = {
     apiKey: "AIzaSyB9ylZzGGq0SPnSKzopBreMGd8Hj9j31O4",
     authDomain: "tippspiel-fd04d.firebaseapp.com",
@@ -29,21 +26,6 @@ export class StorageService {
     // Firebase initialisieren
     const app = initializeApp(this.firebaseConfig);
     this.db = getDatabase(app);
-    this.auth = getAuth(app);
-
-    // Anonymous Authentication
-    this.authenticateAnonymously();
-  }
-
-  private authenticateAnonymously() {
-    signInAnonymously(this.auth)
-      .then(() => {
-        this.isAuthenticated = true;
-        console.log('Anonymous authentication successful');
-      })
-      .catch((error) => {
-        console.error('Authentication error:', error);
-      });
   }
 
   // === Saison-Berechnung ===
