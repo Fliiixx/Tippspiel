@@ -73,7 +73,8 @@ export class ErgebnisseComponent implements OnInit {
         this.daten.runden = result.runden.map((r) => ({
           gewinnzahl: r.gewinnzahl,
           tipps: [],
-          rundenNummer: r.runde  // Verwende die tatsächliche Rundennummer aus der DB
+          rundenNummer: r.runde,  // Verwende die tatsächliche Rundennummer aus der DB
+          saison: saison  // Füge die Saison hinzu
         }))
           .sort((a, b) => a.rundenNummer - b.rundenNummer);
 
@@ -106,8 +107,8 @@ export class ErgebnisseComponent implements OnInit {
       return;
     }
 
-    // Details vom Backend laden
-    this.storage.getRunde(rundenNummer).subscribe({
+    // Details vom Backend laden - WICHTIG: Saison mitgeben!
+    this.storage.getRunde(rundenNummer, this.aktuelleSaison).subscribe({
       next: (tipps) => {
         const formattedTipps = tipps.map(t => ({
           name: t.name,

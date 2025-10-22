@@ -118,8 +118,8 @@ export class StorageService {
   }
 
   // Einzelne Runde abrufen
-  getRunde(rundeId: number): Observable<any[]> {
-    const saisonNum = this.getAktuelleSaisonNumber();
+  getRunde(rundeId: number, saisonNum: number): Observable<any[]> {
+    //const saisonNum = this.getAktuelleSaisonNumber();
 
     return from(
       get(ref(this.db, `saisons/${saisonNum}/runden/${rundeId}`)).then((snapshot) => {

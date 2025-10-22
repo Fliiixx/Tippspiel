@@ -52,24 +52,32 @@ export class TippEingabeComponent implements OnInit {
   }
 
   private loadData() {
-    forkJoin({
-      saison: this.storage.getAktuelleSaison(),
-      rangliste: this.storage.getRangliste(),
-      runden: this.storage.getRunden() // Runden auch laden
-    }).subscribe({
-      next: (result) => {
-        this.aktuelleSaison = result.saison.saison;
-        this.daten.rangliste = result.rangliste.map(r => ({
-          name: r.name,
-          gesamtpunkte: r.gesamtpunkte,
-          gesamtabweichung: r.gesamtabweichung
-        }));
-        this.daten.runden = result.runden; // Runden in daten speichern
-        this.updateTippTextWithPlayerNames();
+    this.storage.getAktuelleSaison().subscribe({
+      next: (saisonResult) => {
+        this.aktuelleSaison = saisonResult.saison;
+
+        // Jetzt Rangliste und Runden für die aktuelle Saison laden
+        forkJoin({
+          rangliste: this.storage.getRangliste(this.aktuelleSaison),
+          runden: this.storage.getRunden(this.aktuelleSaison)
+        }).subscribe({
+          next: (result) => {
+            this.daten.rangliste = result.rangliste.map(r => ({
+              name: r.name,
+              gesamtpunkte: r.gesamtpunkte,
+              gesamtabweichung: r.gesamtabweichung
+            }));
+            this.daten.runden = result.runden;
+            this.updateTippTextWithPlayerNames();
+          },
+          error: (err) => {
+            console.error('Fehler beim Laden der Daten', err);
+            this.updateTippTextWithPlayerNames();
+          }
+        });
       },
       error: (err) => {
-        console.error('Fehler beim Laden der Daten', err);
-        this.updateTippTextWithPlayerNames();
+        console.error('Fehler beim Laden der Saison', err);
       }
     });
   }
