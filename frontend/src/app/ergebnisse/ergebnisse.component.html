@@ -7,6 +7,11 @@
     text-shadow: 0 0 8px rgba(218, 165, 32, 0.8), 0 0 15px rgba(255, 215, 0, 0.5);
   }
 
+  .will-change-transform {
+    will-change: transform;
+    transform: translateZ(0);
+  }
+  
   /* Scrollbar-Styling für einen mittelalterlichen Look */
   ::-webkit-scrollbar {
     width: 10px;
@@ -205,7 +210,7 @@
             </div>
           </div>
           <div class="p-2 sm:p-4">
-            <div class="max-h-115 overflow-y-auto">
+            <div class="max-h-115 overflow-y-auto will-change-transform">
               <table class="w-full text-left">
                 <thead class="sticky top-0 bg-amber-950/95 backdrop-blur-sm md:backdrop-blur-none z-10">
                 <tr>
