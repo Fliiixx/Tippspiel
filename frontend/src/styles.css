@@ -1,5 +1,5 @@
 @import "tailwindcss";/* You can add global styles to this file, and also import other style files */
-
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;700;900&display=swap');
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
