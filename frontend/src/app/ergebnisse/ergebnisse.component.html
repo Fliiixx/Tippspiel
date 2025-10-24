@@ -160,7 +160,7 @@
                     [class.to-orange-800]="i === 2"
                     [class.text-orange-300]="i === 2"
                     [class.border-orange-600]="i === 2">
-                  <td class="px-2 py-3 whitespace-nowrap w-16">
+                  <td class="px-2 py-3 whitespace-nowrap">
                     <span *ngIf="i === 0">🏆</span>
                     <span *ngIf="i > 0">{{ i + 1 }}.</span>
                   </td>
@@ -225,7 +225,7 @@
                 <tr *ngFor="let tipp of angezeigteRunde.tipps"
                     class="hover:bg-amber-900/40 transition-colors duration-200 text-amber-50"
                     [ngClass]="{'bg-green-500/25 text-green-200': tipp.platz === 1}">
-                  <td class="px-2 py-3 whitespace-nowrap w-16 font-semibold">
+                  <td class="px-2 py-3 whitespace-nowrap font-semibold">
                     <span *ngIf="tipp.platz === 1">🥇</span>
                     <span *ngIf="tipp.platz > 1">{{ tipp.platz }}.</span>
                   </td>
