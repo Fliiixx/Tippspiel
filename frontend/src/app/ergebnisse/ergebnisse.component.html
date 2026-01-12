@@ -144,14 +144,14 @@
                 <tbody class="divide-y divide-amber-800/40">
                 <tr *ngFor="let spieler of daten.rangliste; let i = index"
                     class="hover:bg-amber-900/40 transition-colors duration-200 text-amber-50"
-                    [class.font-bold]="i === 0"
+                    [class.font-bold]="i === 0 || (i === 15 && aktuelleSaison === 2)"
                     [class.font-semibold]="i === 1 || i === 2"
-                    [class.bg-gradient-to-r]="i === 0 || i === 1 || i === 2"
-                    [class.from.yellow.600]="i === 0"
-                    [class.to-yellow-700]="i === 0"
-                    [class.text-yellow-200]="i === 0"
-                    [class.border-l-4]="i === 0 || i === 1 || i === 2"
-                    [class.border-yellow-500]="i === 0"
+                    [class.bg-gradient-to-r]="i === 0 || i === 1 || i === 2 || (i === 15 && aktuelleSaison === 2)"
+                    [class.from.yellow.600]="i === 0 || (i === 15 && aktuelleSaison === 2)"
+                    [class.to-yellow-700]="i === 0 || (i === 15 && aktuelleSaison === 2)"
+                    [class.text-yellow-200]="i === 0 || (i === 15 && aktuelleSaison === 2)"
+                    [class.border-l-4]="i === 0 || i === 1 || i === 2 || (i === 15 && aktuelleSaison === 2)"
+                    [class.border-yellow-500]="i === 0 || (i === 15 && aktuelleSaison === 2)"
                     [class.from.gray.400]="i === 1"
                     [class.to-gray-500]="i === 1"
                     [class.text-gray-200]="i === 1"
@@ -162,7 +162,8 @@
                     [class.border-orange-600]="i === 2">
                   <td class="px-2 py-3 whitespace-nowrap">
                     <span *ngIf="i === 0">🏆</span>
-                    <span *ngIf="i > 0">{{ i + 1 }}.</span>
+                    <span *ngIf="i === 15">🌟</span>
+                    <span *ngIf="i > 0 && (aktuelleSaison!=2 || i!=15)">{{ i + 1 }}.</span>
                   </td>
                   <td class="px-2 py-3 whitespace-nowrap">{{ spieler.name }}</td>
                   <td class="px-2 py-3 whitespace-nowrap text-right font-semibold">{{ spieler.gesamtpunkte }}</td>
