@@ -28,6 +28,8 @@ export class ErgebnisseComponent implements OnInit {
   // Saison-Baseline (erste Saison mit Daten)
   baselineSaison: number = 1;
 
+  preise: number[] = [];
+
   constructor(private storage: StorageService, private route: ActivatedRoute, private router: Router) {}
 
   ngOnInit() {
@@ -40,6 +42,10 @@ export class ErgebnisseComponent implements OnInit {
         this.aktuelleGilde = this.storage.getAktuelleGilde();
       }
       this.loadData();
+
+      this.storage.getPreise().subscribe(p => {
+        this.preise = p;
+      });
     });
 
     // Alle Gilden laden

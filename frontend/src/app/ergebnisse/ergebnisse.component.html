@@ -308,44 +308,18 @@
                   </td>
                   <td class="px-2 py-3 whitespace-nowrap">{{ spieler.name }}</td>
                   <td class="hidden md:table-cell px-2 py-3 whitespace-nowrap">
-                    <span *ngIf="i === 0"
-                          class="inline-flex items-center justify-center gap-1
-                                  px-2 py-1.5 rounded-full
-                                  bg-gradient-to-r from-yellow-500 via-yellow-600 to-amber-700
-                                  border-2 border-yellow-200
-                                  text-white font-extrabold text-sm
-                                  shadow-lg shadow-yellow-400/60
-                                  hover:scale-110 hover:shadow-xl
-                                  transition-all duration-200">
-                       50.000
-                       <img src="fp.png" alt="FP" class="w-5 h-5 inline-block drop-shadow-sm">
-                    </span>
 
-                                         <span *ngIf="i === 1"
-                                               class="inline-flex items-center justify-center gap-1
-                                  px-2 py-1.5 rounded-full
-                                  bg-gradient-to-r from-slate-400 via-slate-500 to-slate-600
-                                  border-2 border-slate-100
-                                  text-slate-100 font-extrabold text-sm
-                                  shadow-lg shadow-slate-300/60
-                                  hover:scale-110 hover:shadow-xl
-                                  transition-all duration-200">
-                       25.000
-                       <img src="fp.png" alt="FP" class="w-5 h-5 inline-block drop-shadow-sm">
-                    </span>
+  <span *ngIf="preise[i] !== undefined"
+        class="inline-flex items-center justify-center gap-1
+               px-2 py-1.5 rounded-full
+               border
+               text-sm font-bold
+               transition-all duration-200">
 
-                                         <span *ngIf="i === 2"
-                                               class="inline-flex items-center justify-center gap-1
-                                  px-2 py-1.5 rounded-full
-                                  bg-gradient-to-r from-orange-600 via-amber-700 to-orange-800
-                                  border-2 border-orange-300
-                                  text-orange-50 font-extrabold text-sm
-                                  shadow-lg shadow-orange-500/60
-                                  hover:scale-110 hover:shadow-xl
-                                  transition-all duration-200">
-                       15.000
-                       <img src="fp.png" alt="FP" class="w-5 h-5 inline-block drop-shadow-sm">
-                    </span>
+    {{ preise[i] | number:'1.0-0' }}
+    <img src="fp.png" alt="FP" class="w-5 h-5 inline-block">
+  </span>
+
                   </td>
                   <td class="px-1 py-3 whitespace-nowrap text-right font-semibold">{{ spieler.gesamtpunkte }}</td>
                   <td class="px-1 py-3 whitespace-nowrap text-center">

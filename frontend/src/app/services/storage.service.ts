@@ -324,4 +324,20 @@ export class StorageService {
       })
     );
   }
+
+  getPreise(): Observable<number[]> {
+    return from(
+      get(ref(this.db, `gilden/${this.aktuelleGilde}/preise`))
+        .then(snapshot => {
+          if (snapshot.exists()) {
+            return snapshot.val() as number[];
+          }
+          return [];
+        })
+        .catch(err => {
+          console.error('Fehler beim Laden der Preise:', err);
+          return [];
+        })
+    );
+  }
 }
