@@ -1,10 +1,11 @@
 import { Component, HostListener, OnInit } from '@angular/core';
-import {PersistedData, Runde, Spieler} from '../models';
-import { StorageService } from '../services/storage.service';
-import {DecimalPipe, NgClass, NgForOf, NgIf} from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { forkJoin } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
+import { forkJoin } from 'rxjs';
+import { DecimalPipe, NgClass, NgForOf, NgIf } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+
+import { StorageService } from '../services/storage.service';
+import { PersistedData, Runde, Spieler } from '../models';
 
 @Component({
   selector: 'app-ergebnisse',
@@ -14,157 +15,130 @@ import { ActivatedRoute, Router } from '@angular/router';
   styleUrl: './ergebnisse.component.css',
 })
 export class ErgebnisseComponent implements OnInit {
-  daten: PersistedData = { runden: [], rangliste: [] };
-  angezeigteRundeIndex = -1;
-  aktuelleSaison = 1;
-  alleSaisons: number[] = [];
-  rundenDetails: Map<number, any[]> = new Map();
 
-  // Gilden-Verwaltung
+  // ===== STATE =====
+  daten: PersistedData = { runden: [], rangliste: [] };
+
+  aktuelleGilde = 'default';
   alleGilden: string[] = [];
-  aktuelleGilde: string = 'default';
   showGildenMenu = false;
 
-  // Saison-Baseline (erste Saison mit Daten)
-  baselineSaison: number = 1;
+  alleSaisons: number[] = [];
+  aktuelleSaison!: number;
 
+  angezeigteRundeIndex = -1;
+
+  rundenCache: Map<number, any[]> = new Map();
   preise: number[] = [];
 
-  constructor(private storage: StorageService, private route: ActivatedRoute, private router: Router) {}
+  constructor(
+    private storage: StorageService,
+    private route: ActivatedRoute,
+    private router: Router
+  ) {}
+
+  // ================= INIT =================
 
   ngOnInit() {
-    // Gilde aus Route-Parameter laden
     this.route.params.subscribe(params => {
-      if (params['name']) {
-        this.aktuelleGilde = params['name'];
-        this.storage.setAktuelleGilde(this.aktuelleGilde);
-      } else {
-        this.aktuelleGilde = this.storage.getAktuelleGilde();
-      }
-      this.loadData();
+      this.aktuelleGilde = params['name'] || this.storage.getAktuelleGilde();
+      this.storage.setAktuelleGilde(this.aktuelleGilde);
 
-      this.storage.getPreise().subscribe(p => {
-        this.preise = p;
-      });
+      this.loadInitialData();
     });
 
-    // Alle Gilden laden
-    this.loadGilden();
+    this.storage.getPreise().subscribe(p => this.preise = p);
   }
 
-  loadGilden() {
+  // ================= DATA LOADING =================
+
+  private loadInitialData() {
+    this.loadGilden();
+
+    this.storage.getAlleSaisons().subscribe({
+      next: (saisons) => {
+        this.alleSaisons = saisons;
+
+        if (saisons.length === 0) {
+          this.aktuelleSaison = this.storage.getAktuelleSaisonNumber();
+          return;
+        }
+
+        this.aktuelleSaison = Math.max(...saisons);
+
+        this.loadSaison(this.aktuelleSaison);
+      },
+      error: (err) => console.error('Saison-Load Fehler', err)
+    });
+  }
+
+  private loadGilden() {
     this.storage.getAlleGilden().subscribe({
       next: (gilden) => {
-        this.alleGilden = gilden.length > 0 ? gilden : ['default'];
+        this.alleGilden = gilden.length ? gilden : ['default'];
+
         if (!this.alleGilden.includes(this.aktuelleGilde)) {
           this.aktuelleGilde = this.alleGilden[0];
           this.storage.setAktuelleGilde(this.aktuelleGilde);
-          this.loadData();
         }
-      },
-      error: (err) => {
-        console.error('Fehler beim Laden der Gilden', err);
-        this.alleGilden = ['default'];
-        this.aktuelleGilde = 'default';
       }
     });
   }
 
-  waehleGilde(gildeName: string) {
-    this.aktuelleGilde = gildeName;
-    this.storage.setAktuelleGilde(gildeName);
-    this.showGildenMenu = false;
-    this.router.navigate(['/gilde', gildeName, 'ergebnisse']);
-  }
+  // ================= SAISON =================
 
-  loadData() {
+  loadSaison(saison: number) {
+    this.aktuelleSaison = saison;
 
-    this.rundenDetails.clear();
-
-    forkJoin({
-      saisons: this.storage.getAlleSaisons()
-    }).subscribe({
-
-      next: (result) => {
-
-        this.alleSaisons = result.saisons;
-
-        this.aktuelleSaison =
-          this.alleSaisons.length
-            ? Math.max(...this.alleSaisons)
-            : 1;
-
-        this.baselineSaison =
-          this.alleSaisons.length
-            ? Math.min(...this.alleSaisons)
-            : 1;
-
-        // Jetzt richtige Saison laden
-        this.ladeSaison(this.aktuelleSaison);
-      },
-
-      error: err =>
-        console.error('Fehler beim Laden', err)
-    });
-  }
-
-  ladeSaison(saison: number) {
     forkJoin({
       runden: this.storage.getRunden(saison),
       rangliste: this.storage.getRangliste(saison)
     }).subscribe({
-      next: (result) => {
-        this.aktuelleSaison = saison;
-        this.rundenDetails.clear();
-        if (this.baselineSaison === 1 && saison > 1) {
-          this.baselineSaison = saison;
-        }
+      next: (res) => {
 
-        // Runden mit korrekter Runden-ID speichern
-        this.daten.runden = result.runden.map((r) => ({
-          gewinnzahl: r.gewinnzahl,
-          tipps: [],
-          rundenNummer: r.runde,  // Verwende die tatsächliche Rundennummer aus der DB
-          saison: saison  // Füge die Saison hinzu
-        }))
+        // Runden normalisieren
+        this.daten.runden = res.runden
+          .map(r => ({
+            rundenNummer: r.runde,
+            gewinnzahl: r.gewinnzahl,
+            tipps: [],
+            saison
+          }))
           .sort((a, b) => a.rundenNummer - b.rundenNummer);
 
-        this.daten.rangliste = result.rangliste.map(r => ({
-          name: r.name,
-          gesamtpunkte: r.gesamtpunkte,
-          gesamtabweichung: r.gesamtabweichung
-        }));
+        this.daten.rangliste = res.rangliste;
 
-        // Rangänderungen berechnen
+        this.rundenCache.clear();
+
+        this.angezeigteRundeIndex =
+          this.daten.runden.length ? this.daten.runden.length - 1 : -1;
+
         this.berechneRangaenderungen();
 
-        if (this.daten.runden.length > 0) {
-          this.angezeigteRundeIndex = this.daten.runden.length - 1;
-          this.ladeRundenDetails(this.angezeigteRundeIndex);
-        } else {
-          this.angezeigteRundeIndex = -1;
+        if (this.angezeigteRundeIndex >= 0) {
+          this.loadRundeDetails(this.angezeigteRundeIndex);
         }
       },
-      error: (err) => console.error('Fehler beim Laden der Saison', err)
+      error: (err) => console.error('Saison Load Fehler', err)
     });
   }
 
-  ladeRundenDetails(index: number) {
+  // ================= RUNDE DETAILS =================
+
+  loadRundeDetails(index: number) {
     if (index < 0 || index >= this.daten.runden.length) return;
 
     const runde = this.daten.runden[index];
-    const rundenNummer:number  = <number>runde.rundenNummer;  // Verwende direkt die rundenNummer
+    const id = runde.rundenNummer!;
 
-    // Prüfen, ob Details bereits geladen wurden
-    if (this.rundenDetails.has(rundenNummer)) {
-      runde.tipps = this.rundenDetails.get(rundenNummer)!;
+    if (this.rundenCache.has(id)) {
+      runde.tipps = this.rundenCache.get(id)!;
       return;
     }
 
-    // Details vom Backend laden - WICHTIG: Saison mitgeben!
-    this.storage.getRunde(rundenNummer, this.aktuelleSaison).subscribe({
+    this.storage.getRunde(id, this.aktuelleSaison).subscribe({
       next: (tipps) => {
-        const formattedTipps = tipps.map(t => ({
+        const mapped = tipps.map(t => ({
           name: t.name,
           zahl: t.zahl,
           abweichung: t.abweichung,
@@ -172,106 +146,71 @@ export class ErgebnisseComponent implements OnInit {
           platz: t.platz
         }));
 
-        this.rundenDetails.set(rundenNummer, formattedTipps);
-        runde.tipps = formattedTipps;
-      },
-      error: (err) => console.error('Fehler beim Laden der Rundendetails', err)
+        this.rundenCache.set(id, mapped);
+        runde.tipps = mapped;
+      }
     });
   }
 
-  get angezeigteRunde(): Runde | null {
-    if (
-      this.angezeigteRundeIndex >= 0 &&
-      this.angezeigteRundeIndex < this.daten.runden.length
-    ) {
-      return this.daten.runden[this.angezeigteRundeIndex];
-    }
-    return null;
-  }
+  // ================= NAVIGATION =================
 
-  get displaySaison(): number {
-    return this.aktuelleSaison - (this.baselineSaison - 1);
+  get angezeigteRunde(): Runde | null {
+    return this.daten.runden[this.angezeigteRundeIndex] ?? null;
   }
 
   vorherigeRunde() {
     if (this.angezeigteRundeIndex > 0) {
       this.angezeigteRundeIndex--;
-      this.ladeRundenDetails(this.angezeigteRundeIndex);
+      this.loadRundeDetails(this.angezeigteRundeIndex);
     }
   }
 
   naechsteRunde() {
     if (this.angezeigteRundeIndex < this.daten.runden.length - 1) {
       this.angezeigteRundeIndex++;
-      this.ladeRundenDetails(this.angezeigteRundeIndex);
+      this.loadRundeDetails(this.angezeigteRundeIndex);
     }
   }
 
-  @HostListener('window:keydown', ['$event'])
-  handleKeyboardEvent(event: KeyboardEvent) {
-    if (event.key === 'ArrowLeft') {
-      this.vorherigeRunde();
-    } else if (event.key === 'ArrowRight') {
-      this.naechsteRunde();
-    }
-  }
-
-
+  // ================= SAISON DATUM =================
 
   getSaisonDatumsrahmen(saison: number): string {
-    const startDatum = new Date('2025-07-31');
+    const start = new Date('2025-07-31T00:00:00Z');
     const wochenProSaison = 12;
 
-    // 🔥 WICHTIG: zurückrechnen auf echte Saison-ID
-    const echteSaison = saison + (this.baselineSaison + 1);
+    const startDate = new Date(start);
+    startDate.setDate(startDate.getDate() + (saison - 1) * wochenProSaison * 7);
 
-    const saisonStart = new Date(startDatum);
-    saisonStart.setDate(
-      saisonStart.getDate() + (echteSaison - 1) * wochenProSaison * 7
-    );
+    const endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + wochenProSaison * 7 - 1);
 
-    const saisonEnde = new Date(saisonStart);
-    saisonEnde.setDate(saisonEnde.getDate() + wochenProSaison * 7 - 1);
-
-    const formatDatum = (datum: Date) =>
-      datum.toLocaleDateString('de-DE', {
+    const fmt = (d: Date) =>
+      d.toLocaleDateString('de-DE', {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric'
       });
 
-    return `${formatDatum(saisonStart)} - ${formatDatum(saisonEnde)}`;
+    return `${fmt(startDate)} - ${fmt(endDate)}`;
   }
 
-  private berechneRanglisteNeu(runden: Runde[]): Spieler[] {
-    const rangMap: Map<string, { punkte: number; abweichung: number }> = new Map();
-    const punkteSchema = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
+  // ================= KEYBOARD =================
 
-    for (const runde of runden) {
-      runde.tipps.forEach((tipp, index) => {
-        const punkte = punkteSchema[index] || 0;
-        const bisherige = rangMap.get(tipp.name) || { punkte: 0, abweichung: 0 };
-        rangMap.set(tipp.name, {
-          punkte: bisherige.punkte + punkte,
-          abweichung: bisherige.abweichung + tipp.abweichung
-        });
-      });
-    }
-
-    const rangliste = Array.from(rangMap.entries()).map(([name, data]) => ({
-      name,
-      gesamtpunkte: data.punkte,
-      gesamtabweichung: data.abweichung,
-    }));
-
-    rangliste.sort((a, b) => {
-      if (b.gesamtpunkte !== a.gesamtpunkte) {
-        return b.gesamtpunkte - a.gesamtpunkte;
-      }
-      return a.gesamtabweichung - b.gesamtabweichung;
-    });
-    return rangliste;
+  @HostListener('window:keydown', ['$event'])
+  handleKey(e: KeyboardEvent) {
+    if (e.key === 'ArrowLeft') this.vorherigeRunde();
+    if (e.key === 'ArrowRight') this.naechsteRunde();
   }
+
+  // ================= GILDEN =================
+
+  waehleGilde(name: string) {
+    this.aktuelleGilde = name;
+    this.storage.setAktuelleGilde(name);
+    this.showGildenMenu = false;
+    this.router.navigate(['/gilde', name, 'ergebnisse']);
+  }
+
 
   private berechneRangaenderungen() {
     if (this.daten.runden.length === 0) return;
@@ -316,4 +255,5 @@ export class ErgebnisseComponent implements OnInit {
       error: (err) => console.error('Fehler beim Berechnen der Rangänderungen', err)
     });
   }
+
 }

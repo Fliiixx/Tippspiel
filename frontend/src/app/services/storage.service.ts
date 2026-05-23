@@ -62,12 +62,16 @@ export class StorageService {
   }
 
   // === Saison-Berechnung ===
-  private getAktuelleSaisonNumber(): number {
-    const startDatum = new Date('2025-07-31').getTime();
-    const jetzt = new Date().getTime();
-    const diffMs = jetzt - startDatum;
-    const diffWochen = Math.floor(diffMs / (1000 * 60 * 60 * 24 * 7));
-    return Math.floor(diffWochen / 12) + 1;
+  public getAktuelleSaisonNumber(): number {
+    const startDatum = new Date('2025-07-31T00:00:00Z');
+    const jetzt = new Date();
+
+    const msProTag = 24 * 60 * 60 * 1000;
+    const tage = Math.floor((+jetzt - +startDatum) / msProTag);
+
+    const tageProSaison = 12 * 7;
+
+    return Math.floor(tage / tageProSaison) + 1;
   }
 
   // Aktuelle Saison abrufen
@@ -246,9 +250,8 @@ export class StorageService {
     );
   }
 
-  // Runde speichern für aktuelle Gilde
-  speichereRunde(gewinnzahl: number, tipps: any[]): Observable<any> {
-    const saisonNum = this.getAktuelleSaisonNumber();
+
+  speichereRunde(gewinnzahl: number, tipps: any[], saisonNum:number): Observable<any> {
 
     return from(
       get(ref(this.db, `gilden/${this.aktuelleGilde}/saisons/${saisonNum}/runden`)).then((snapshot) => {
@@ -278,9 +281,8 @@ export class StorageService {
     );
   }
 
-  // Letzte Runde löschen für aktuelle Gilde
-  letzteRundeLoeschen(): Observable<any> {
-    const saisonNum = this.getAktuelleSaisonNumber();
+
+  letzteRundeLoeschen(saisonNum:number): Observable<any> {
 
     return from(
       get(ref(this.db, `gilden/${this.aktuelleGilde}/saisons/${saisonNum}/runden`)).then((snapshot) => {

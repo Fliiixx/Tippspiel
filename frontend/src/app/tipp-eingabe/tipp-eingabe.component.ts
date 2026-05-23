@@ -33,9 +33,6 @@ export class TippEingabeComponent implements OnInit {
   aktuelleGilde: string = 'default';
   showGildenMenu = false;
 
-  // Saison-Baseline (erste Saison mit Daten)
-  baselineSaison: number = 1;
-
   constructor(private storage: StorageService, private route: ActivatedRoute, private router: Router) {}
 
   ngOnInit() {
@@ -112,9 +109,14 @@ export class TippEingabeComponent implements OnInit {
 
       next: (meta) => {
 
-        this.baselineSaison = meta.erste;
         this.aktuelleSaison = meta.letzte;
         this.alleSaisons = meta.saisons.sort((a,b)=>a-b);
+
+        let x = this.getNaechsteSaison();
+
+        if(x){
+          this.alleSaisons.push(x);
+        }
 
         forkJoin({
           rangliste: this.storage.getRangliste(this.aktuelleSaison),
@@ -170,8 +172,9 @@ export class TippEingabeComponent implements OnInit {
     // 2. Tipps parsen
     const lines = this.tippText
       .split('\n')
-      .map((l) => l.trim())
-      .filter((l) => l.length > 0);
+      .map(l => l.trim())
+      .filter(l => l.length > 0)
+      .filter(l => /[0-9]+(?:[.,][0-9]+)?\s*%?$/.test(l));
 
     const tipps: Tipp[] = [];
     for (const line of lines) {
@@ -232,7 +235,7 @@ export class TippEingabeComponent implements OnInit {
     this.letzterGewinner = tipps.length ? tipps[0] : null;
 
     // Runde an Backend senden
-    this.storage.speichereRunde(gewinnzahl, tipps).subscribe({
+    this.storage.speichereRunde(gewinnzahl, tipps, this.aktuelleSaison).subscribe({
       next: (response) => {
         console.log('Runde erfolgreich gespeichert:', response);
         alert(`Runde ${response.runde} (Saison ${this.displaySaison}) in Gilde "${response.gilde}" erfolgreich gespeichert!`);
@@ -264,7 +267,7 @@ export class TippEingabeComponent implements OnInit {
       return;
     }
 
-    this.storage.letzteRundeLoeschen().subscribe({
+    this.storage.letzteRundeLoeschen(this.aktuelleSaison).subscribe({
       next: (response) => {
         console.log('Letzte Runde gelöscht:', response);
         alert(`Runde ${response.geloeschteRunde} wurde erfolgreich aus Gilde "${response.gilde}" gelöscht.`);
@@ -289,7 +292,7 @@ export class TippEingabeComponent implements OnInit {
   }
 
   get displaySaison(): number {
-    return this.aktuelleSaison - (this.baselineSaison - 1);
+    return this.aktuelleSaison;
   }
 
   ladeSaison(saison: number) {
@@ -308,6 +311,33 @@ export class TippEingabeComponent implements OnInit {
         this.updateTippTextWithPlayerNames();
       }
     });
+  }
+
+  getSaisonDatumsrahmen(saison: number): string {
+    const start = new Date('2025-07-31T00:00:00Z');
+    const wochenProSaison = 12;
+
+    const startDate = new Date(start);
+    startDate.setDate(startDate.getDate() + (saison - 1) * wochenProSaison * 7);
+
+    const endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + wochenProSaison * 7 - 1);
+
+    const fmt = (d: Date) =>
+      d.toLocaleDateString('de-DE', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+
+    return `${fmt(startDate)} - ${fmt(endDate)}`;
+  }
+
+  getNaechsteSaison() {
+    const aktuelle = this.storage.getAktuelleSaisonNumber();
+    const existiert = this.alleSaisons.includes(aktuelle);
+
+    return existiert ? null : aktuelle;
   }
 
 }
