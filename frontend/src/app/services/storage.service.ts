@@ -95,6 +95,45 @@ export class StorageService {
     );
   }
 
+  // Rangliste bis zu einer bestimmten Runde berechnen
+  getRanglisteBisRunde(bisRunde: number, saison?: number): Observable<any[]> {
+    const saisonNum = saison || this.getAktuelleSaisonNumber();
+
+    return from(
+      get(ref(this.db, `saisons/${saisonNum}/runden`)).then((snapshot) => {
+        if (!snapshot.exists()) {
+          return [];
+        }
+
+        const runden = snapshot.val();
+        const rangliste: { [key: string]: any } = {};
+
+        // Aggregiere Punkte pro Spieler nur bis zur angegebenen Runde
+        Object.entries(runden).forEach(([rundeNum, runde]: [string, any]) => {
+          if (parseInt(rundeNum) <= bisRunde) {
+            Object.values(runde.tipps || {}).forEach((tipp: any) => {
+              if (!rangliste[tipp.name]) {
+                rangliste[tipp.name] = {
+                  name: tipp.name,
+                  gesamtpunkte: 0,
+                  gesamtabweichung: 0
+                };
+              }
+              rangliste[tipp.name].gesamtpunkte += tipp.punkte || 0;
+              rangliste[tipp.name].gesamtabweichung += tipp.abweichung || 0;
+            });
+          }
+        });
+
+        return Object.values(rangliste)
+          .sort((a, b) => b.gesamtpunkte - a.gesamtpunkte || a.gesamtabweichung - b.gesamtabweichung);
+      }).catch((error) => {
+        console.error('Fehler beim Abrufen der Rangliste:', error);
+        return [];
+      })
+    );
+  }
+
   // Runden abrufen (aktuelle oder spezifische Saison)
   getRunden(saison?: number): Observable<any[]> {
     const saisonNum = saison || this.getAktuelleSaisonNumber();

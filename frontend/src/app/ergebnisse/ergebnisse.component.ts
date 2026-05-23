@@ -51,6 +51,9 @@ export class ErgebnisseComponent implements OnInit {
           gesamtabweichung: r.gesamtabweichung
         }));
 
+        // Rangänderungen berechnen
+        this.berechneRangaenderungen();
+
         if (this.daten.runden.length > 0) {
           this.angezeigteRundeIndex = this.daten.runden.length - 1;
           this.ladeRundenDetails(this.angezeigteRundeIndex);
@@ -83,6 +86,9 @@ export class ErgebnisseComponent implements OnInit {
           gesamtpunkte: r.gesamtpunkte,
           gesamtabweichung: r.gesamtabweichung
         }));
+
+        // Rangänderungen berechnen
+        this.berechneRangaenderungen();
 
         if (this.daten.runden.length > 0) {
           this.angezeigteRundeIndex = this.daten.runden.length - 1;
@@ -208,5 +214,49 @@ export class ErgebnisseComponent implements OnInit {
       return a.gesamtabweichung - b.gesamtabweichung;
     });
     return rangliste;
+  }
+
+  private berechneRangaenderungen() {
+    if (this.daten.runden.length === 0) return;
+
+    // Hole die letzte Runde
+    const letzteRunde = this.daten.runden[this.daten.runden.length - 1];
+    const vorletzteRunde = this.daten.runden.length > 1 ? this.daten.runden[this.daten.runden.length - 2] : null;
+
+    if (!vorletzteRunde) {
+      // Erste Runde: alle Spieler sind neu, keine Rangänderung
+      this.daten.rangliste.forEach(spieler => {
+        spieler.rangaenderung = undefined;
+      });
+      return;
+    }
+
+    // Berechne Rangliste bis zur vorletzten Runde
+    const vorletzteRundenNummer = vorletzteRunde.rundenNummer!;
+
+    this.storage.getRanglisteBisRunde(vorletzteRundenNummer, this.aktuelleSaison).subscribe({
+      next: (vorherigeRangliste) => {
+        // Erstelle Map für schnellen Zugriff auf alte Ränge
+        const alteRaenge = new Map<string, number>();
+        vorherigeRangliste.forEach((spieler, index) => {
+          alteRaenge.set(spieler.name, index + 1);
+        });
+
+        // Berechne Rangänderung für jeden Spieler
+        this.daten.rangliste.forEach((spieler, index) => {
+          const neuerRang = index + 1;
+          const alterRang = alteRaenge.get(spieler.name);
+
+          if (alterRang === undefined) {
+            // Neuer Spieler: setze auf letzten Platz der vorigen Runde
+            spieler.rangaenderung = vorherigeRangliste.length - neuerRang;
+          } else {
+            // Bestehender Spieler: Differenz berechnen (positiv = aufgestiegen)
+            spieler.rangaenderung = alterRang - neuerRang;
+          }
+        });
+      },
+      error: (err) => console.error('Fehler beim Berechnen der Rangänderungen', err)
+    });
   }
 }

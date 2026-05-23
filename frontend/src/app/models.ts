@@ -19,6 +19,7 @@ export interface Spieler {
   name: string;
   gesamtpunkte: number;
   gesamtabweichung: number;
+  rangaenderung?: number; // positiv = aufgestiegen, negativ = abgestiegen, undefined = neu
 }
 
 

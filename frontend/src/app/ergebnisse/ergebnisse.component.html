@@ -11,7 +11,7 @@
     will-change: transform;
     transform: translateZ(0);
   }
-  
+
   /* Scrollbar-Styling für einen mittelalterlichen Look */
   ::-webkit-scrollbar {
     width: 10px;
@@ -82,6 +82,85 @@
     background: linear-gradient(90deg, transparent 0%, rgba(218, 165, 32, 0.6) 50%, transparent 100%);
   }
 
+  /* Trend-Animationen */
+  @keyframes pulse-glow-green {
+    0%, 100% {
+      box-shadow: 0 0 8px rgba(34, 197, 94, 0.25), inset 0 0 8px rgba(34, 197, 94, 0.08);
+    }
+    50% {
+      box-shadow: 0 0 12px rgba(34, 197, 94, 0.35), inset 0 0 12px rgba(34, 197, 94, 0.12);
+    }
+  }
+
+  @keyframes pulse-glow-red {
+    0%, 100% {
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.25), inset 0 0 8px rgba(239, 68, 68, 0.08);
+    }
+    50% {
+      box-shadow: 0 0 12px rgba(239, 68, 68, 0.35), inset 0 0 12px rgba(239, 68, 68, 0.12);
+    }
+  }
+
+  @keyframes pulse-glow-blue {
+    0%, 100% {
+      box-shadow: 0 0 8px rgba(59, 130, 246, 0.25), inset 0 0 8px rgba(59, 130, 246, 0.08);
+    }
+    50% {
+      box-shadow: 0 0 12px rgba(59, 130, 246, 0.35), inset 0 0 12px rgba(59, 130, 246, 0.12);
+    }
+  }
+
+  @keyframes pulse-glow-amber {
+    0%, 100% {
+      box-shadow: 0 0 8px rgba(217, 119, 6, 0.25), inset 0 0 8px rgba(217, 119, 6, 0.08);
+    }
+    50% {
+      box-shadow: 0 0 12px rgba(217, 119, 6, 0.35), inset 0 0 12px rgba(217, 119, 6, 0.12);
+    }
+  }
+
+  .trend-up {
+    animation: pulse-glow-green 4s ease-in-out infinite;
+  }
+
+  .trend-down {
+    animation: pulse-glow-red 4s ease-in-out infinite;
+  }
+
+  .trend-stable {
+    animation: pulse-glow-amber 4s ease-in-out infinite;
+  }
+
+  .trend-new {
+    animation: pulse-glow-blue 4s ease-in-out infinite;
+  }
+
+  /* Langsamere Bounce-Animation */
+  @keyframes gentle-bounce {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-3px);
+    }
+  }
+
+  @keyframes gentle-bounce-down {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(3px);
+    }
+  }
+
+  .gentle-bounce {
+    animation: gentle-bounce 2s ease-in-out infinite;
+  }
+
+  .gentle-bounce-down {
+    animation: gentle-bounce-down 2s ease-in-out infinite;
+  }
 </style>
 
 <!-- Hauptcontainer mit FOE-Stil -->
@@ -137,6 +216,7 @@
                 <tr>
                   <th scope="col" class="px-2 py-3 text-left text-xs font-medium text-amber-300 uppercase tracking-widest">#</th>
                   <th scope="col" class="px-2 py-3 text-left text-xs font-medium text-amber-300 uppercase tracking-widest">Name</th>
+                  <th scope="col" class="px-2 py-3 text-center text-xs font-medium text-amber-300 uppercase tracking-widest">Trend</th>
                   <th scope="col" class="px-2 py-3 text-right text-xs font-medium text-amber-300 uppercase tracking-widest">Punkte</th>
                   <th scope="col" class="px-2 py-3 text-right text-xs font-medium text-amber-300 uppercase tracking-widest">Abw.</th>
                 </tr>
@@ -166,6 +246,27 @@
                     <span *ngIf="i > 0 && (aktuelleSaison!=2 || i!=14)">{{ i + 1 }}.</span>
                   </td>
                   <td class="px-2 py-3 whitespace-nowrap">{{ spieler.name }}</td>
+                  <td class="px-2 py-3 whitespace-nowrap text-center">
+                    <span *ngIf="spieler.rangaenderung !== undefined && spieler.rangaenderung > 0"
+                          class="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-full bg-gradient-to-r from-green-500/40 via-green-500/30 to-green-600/40 border border-green-500/60 text-green-200 font-bold text-sm trend-up">
+                      <svg class="w-4 h-4 gentle-bounce" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
+                      {{ spieler.rangaenderung }}
+                    </span>
+                    <span *ngIf="spieler.rangaenderung !== undefined && spieler.rangaenderung < 0"
+                          class="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-full bg-gradient-to-r from-red-500/40 via-red-500/30 to-red-600/40 border border-red-500/60 text-red-200 font-bold text-sm trend-down">
+                      <svg class="w-4 h-4 gentle-bounce-down" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 10.293a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l4.293-4.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                      {{ -spieler.rangaenderung }}
+                    </span>
+                    <span *ngIf="spieler.rangaenderung !== undefined && spieler.rangaenderung === 0"
+                          class="inline-flex items-center justify-center px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-500/40 via-amber-500/30 to-amber-600/40 border border-amber-500/60 text-amber-200 font-bold text-sm trend-stable">
+                      0
+                    </span>
+                    <span *ngIf="spieler.rangaenderung === undefined"
+                          class="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-full bg-gradient-to-r from-blue-500/40 via-blue-500/30 to-cyan-600/40 border border-blue-500/60 text-blue-200 font-bold text-sm trend-new">
+                      <span class="animate-pulse">✨</span>
+                      Neu!
+                    </span>
+                  </td>
                   <td class="px-2 py-3 whitespace-nowrap text-right font-semibold">{{ spieler.gesamtpunkte }}</td>
                   <td class="px-2 py-3 whitespace-nowrap text-right">{{ spieler.gesamtabweichung | number:'1.1-1' }}</td>
                 </tr>
