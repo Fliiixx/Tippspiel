@@ -170,10 +170,19 @@
   <div class="content-wrapper p-3">
     <!-- Header: Titel und Saison-Auswahl -->
     <div class="mb-4 flex flex-col md:flex-row md:justify-between md:items-center gap-6">
-      <div></div>
+      <div>
+        <!-- Gilden-Menü -->
+        <div class="relative inline-block">
+          <div
+            (click)="showGildenMenu = !showGildenMenu"
+            class="px-4 py-2 bg-amber-700 hover:bg-amber-600 text-amber-100 rounded-lg border-2 border-amber-600 transition-all duration-300 font-semibold">
+            🛡️  {{ aktuelleGilde }}
+          </div>
+        </div>
+      </div>
       <div class="flex items-center gap-3">
         <label for="saison-select" class="text-sm font-medium text-amber-100">
-          Season {{aktuelleSaison}}:
+          Saison {{displaySaison}}:
         </label>
         <div class="relative">
           <select
@@ -250,7 +259,7 @@
 
   <span *ngIf="i === 0"
         class="inline-flex items-center justify-center
-               w-10 h-10 rounded-full
+               w-10 h-8 rounded-full
                bg-gradient-to-br from-yellow-300 via-yellow-500 to-amber-700
                border-2 border-yellow-100
                text-xl
@@ -264,100 +273,100 @@
 
                     <span *ngIf="i === 1"
                           class="inline-flex items-center justify-center
-               w-10 h-10 rounded-full
+               w-10 h-8 rounded-full
                bg-gradient-to-br from-slate-200 via-slate-400 to-slate-700
                border-2 border-slate-100
                text-xl
                shadow-[0_0_18px_rgba(203,213,225,0.65)]
                hover:scale-110 hover:rotate-3
                transition-all duration-300">
-    <span class="drop-shadow-[0_2px_3px_rgba(0,0,0,0.9)]">
-      🥈
-    </span>
-  </span>
+     <span class="drop-shadow-[0_2px_3px_rgba(0,0,0,0.9)]">
+       🥈
+     </span>
+   </span>
 
                     <span *ngIf="i === 2"
                           class="inline-flex items-center justify-center
-               w-10 h-10 rounded-full
+               w-10 h-8 rounded-full
                bg-gradient-to-br from-orange-400 via-amber-600 to-orange-900
                border-2 border-orange-200
                text-xl
                shadow-[0_0_18px_rgba(234,88,12,0.65)]
                hover:scale-110 hover:rotate-3
                transition-all duration-300">
-    <span class="drop-shadow-[0_2px_3px_rgba(0,0,0,0.9)]">
-      🥉
-    </span>
-  </span>
+     <span class="drop-shadow-[0_2px_3px_rgba(0,0,0,0.9)]">
+       🥉
+     </span>
+   </span>
 
                     <span *ngIf="i === 14 && aktuelleSaison==2">🌟</span>
 
                     <span *ngIf="i > 2 && (aktuelleSaison!=2 || i!=14)">
-    {{ i + 1 }}.
-  </span>
+     {{ i + 1 }}.
+   </span>
 
                   </td>
                   <td class="px-2 py-3 whitespace-nowrap">{{ spieler.name }}</td>
                   <td class="hidden md:table-cell px-2 py-3 whitespace-nowrap">
                     <span *ngIf="i === 0"
                           class="inline-flex items-center justify-center gap-1
-                                 px-2 py-1.5 rounded-full
-                                 bg-gradient-to-r from-yellow-500 via-yellow-600 to-amber-700
-                                 border-2 border-yellow-200
-                                 text-white font-extrabold text-sm
-                                 shadow-lg shadow-yellow-400/60
-                                 hover:scale-110 hover:shadow-xl
-                                 transition-all duration-200">
-                      100.000
-                      <img src="fp.png" alt="FP" class="w-5 h-5 inline-block drop-shadow-sm">
+                                  px-2 py-1.5 rounded-full
+                                  bg-gradient-to-r from-yellow-500 via-yellow-600 to-amber-700
+                                  border-2 border-yellow-200
+                                  text-white font-extrabold text-sm
+                                  shadow-lg shadow-yellow-400/60
+                                  hover:scale-110 hover:shadow-xl
+                                  transition-all duration-200">
+                       50.000
+                       <img src="fp.png" alt="FP" class="w-5 h-5 inline-block drop-shadow-sm">
                     </span>
 
-                                        <span *ngIf="i === 1"
-                                              class="inline-flex items-center justify-center gap-1
-                                 px-2 py-1.5 rounded-full
-                                 bg-gradient-to-r from-slate-400 via-slate-500 to-slate-600
-                                 border-2 border-slate-100
-                                 text-slate-100 font-extrabold text-sm
-                                 shadow-lg shadow-slate-300/60
-                                 hover:scale-110 hover:shadow-xl
-                                 transition-all duration-200">
-                      25.000
-                      <img src="fp.png" alt="FP" class="w-5 h-5 inline-block drop-shadow-sm">
+                                         <span *ngIf="i === 1"
+                                               class="inline-flex items-center justify-center gap-1
+                                  px-2 py-1.5 rounded-full
+                                  bg-gradient-to-r from-slate-400 via-slate-500 to-slate-600
+                                  border-2 border-slate-100
+                                  text-slate-100 font-extrabold text-sm
+                                  shadow-lg shadow-slate-300/60
+                                  hover:scale-110 hover:shadow-xl
+                                  transition-all duration-200">
+                       25.000
+                       <img src="fp.png" alt="FP" class="w-5 h-5 inline-block drop-shadow-sm">
                     </span>
 
-                                        <span *ngIf="i === 2"
-                                              class="inline-flex items-center justify-center gap-1
-                                 px-2 py-1.5 rounded-full
-                                 bg-gradient-to-r from-orange-600 via-amber-700 to-orange-800
-                                 border-2 border-orange-300
-                                 text-orange-50 font-extrabold text-sm
-                                 shadow-lg shadow-orange-500/60
-                                 hover:scale-110 hover:shadow-xl
-                                 transition-all duration-200">
-                      15.000
-                      <img src="fp.png" alt="FP" class="w-5 h-5 inline-block drop-shadow-sm">
+                                         <span *ngIf="i === 2"
+                                               class="inline-flex items-center justify-center gap-1
+                                  px-2 py-1.5 rounded-full
+                                  bg-gradient-to-r from-orange-600 via-amber-700 to-orange-800
+                                  border-2 border-orange-300
+                                  text-orange-50 font-extrabold text-sm
+                                  shadow-lg shadow-orange-500/60
+                                  hover:scale-110 hover:shadow-xl
+                                  transition-all duration-200">
+                       15.000
+                       <img src="fp.png" alt="FP" class="w-5 h-5 inline-block drop-shadow-sm">
                     </span>
                   </td>
                   <td class="px-1 py-3 whitespace-nowrap text-right font-semibold">{{ spieler.gesamtpunkte }}</td>
                   <td class="px-1 py-3 whitespace-nowrap text-center">
                     <span *ngIf="spieler.rangaenderung !== undefined && spieler.rangaenderung > 0"
                           class="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-full bg-gradient-to-r from-green-500/40 via-green-500/30 to-green-600/40 border border-green-500/60 text-green-200 font-bold text-sm trend-up">
-                      <svg class="w-4 h-4 gentle-bounce" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
-                      {{ spieler.rangaenderung }}
+                       <svg class="w-4 h-4 gentle-bounce" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
+                       {{ spieler.rangaenderung }}
                     </span>
                     <span *ngIf="spieler.rangaenderung !== undefined && spieler.rangaenderung < 0"
                           class="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-full bg-gradient-to-r from-red-500/40 via-red-500/30 to-red-600/40 border border-red-500/60 text-red-200 font-bold text-sm trend-down">
-                      <svg class="w-4 h-4 gentle-bounce-down" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 10.293a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l4.293-4.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
-                      {{ -spieler.rangaenderung }}
+                       <svg class="w-4 h-4 gentle-bounce-down" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 10.293a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l4.293-4.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                       {{ -spieler.rangaenderung }}
                     </span>
                     <span *ngIf="spieler.rangaenderung !== undefined && spieler.rangaenderung === 0"
                           class="inline-flex items-center justify-center px-5 py-1.5 rounded-full bg-gradient-to-r from-amber-500/40 via-amber-500/30 to-amber-600/40 border border-amber-500/60 text-amber-200 font-bold text-sm trend-stable">
-                      –
+                       –
                     </span>
                     <span *ngIf="spieler.rangaenderung === undefined"
                           class="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-full bg-gradient-to-r from-blue-500/40 via-blue-500/30 to-cyan-600/40 border border-blue-500/60 text-blue-200 font-bold text-sm trend-new">
-                      <span class="animate-pulse">✨</span>
-                      Neu!
+                       <span class="animate-pulse">✨</span>
+                       Neu!
                     </span>
                   </td>
                   <td class="hidden sm:table-cell px-1 py-3 whitespace-nowrap text-right">{{ spieler.gesamtabweichung | number:'1.1-1' }}</td>
@@ -383,8 +392,8 @@
               <!-- Button "Vorherige Runde" -->
               <button (click)="vorherigeRunde()" [disabled]="angezeigteRundeIndex <= 0"
                       class="gold-button p-2 aspect-square text-amber-950 rounded-lg transition-all duration-300
-                                 focus:enabled:outline-none focus:enabled:ring-2 focus:enabled:ring-amber-400
-                                 disabled:text-amber-800 disabled:cursor-not-allowed">
+                                  focus:enabled:outline-none focus:enabled:ring-2 focus:enabled:ring-amber-400
+                                  disabled:text-amber-800 disabled:cursor-not-allowed">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
               </button>
 
@@ -397,8 +406,8 @@
               <!-- Button "Nächste Runde" -->
               <button (click)="naechsteRunde()" [disabled]="angezeigteRundeIndex >= daten.runden.length - 1"
                       class="gold-button p-2 aspect-square text-amber-950 rounded-lg transition-all duration-300
-                                 focus:enabled:outline-none focus:enabled:ring-2 focus:enabled:ring-amber-400
-                                 disabled:text-amber-800 disabled:cursor-not-allowed">
+                                  focus:enabled:outline-none focus:enabled:ring-2 focus:enabled:ring-amber-400
+                                  disabled:text-amber-800 disabled:cursor-not-allowed">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
               </button>
             </div>

@@ -205,14 +205,14 @@
       <h1 class="text-2xl font-bold text-shadow-glow">Tippspiel</h1>
       <nav class="flex gap-4">
         <a
-          routerLink="/tipp-eingabe"
+          routerLink="/gilde/{{gildenName}}/tipp-eingabe"
           routerLinkActive="text-amber-300"
           [routerLinkActiveOptions]="{ exact: true }"
           class="hover:text-amber-300 transition font-semibold"
         >Tipp-Eingabe</a
         >
         <a
-          routerLink="/ergebnisse"
+          routerLink="/gilde/{{gildenName}}/ergebnisse"
           routerLinkActive="text-amber-300"
           class="hover:text-amber-300 transition font-semibold"
         >Ergebnisse</a

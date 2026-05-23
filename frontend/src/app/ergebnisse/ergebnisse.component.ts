@@ -4,6 +4,7 @@ import { StorageService } from '../services/storage.service';
 import {DecimalPipe, NgClass, NgForOf, NgIf} from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
   selector: 'app-ergebnisse',
@@ -19,47 +20,85 @@ export class ErgebnisseComponent implements OnInit {
   alleSaisons: number[] = [];
   rundenDetails: Map<number, any[]> = new Map();
 
-  constructor(private storage: StorageService) {}
+  // Gilden-Verwaltung
+  alleGilden: string[] = [];
+  aktuelleGilde: string = 'default';
+  showGildenMenu = false;
+
+  // Saison-Baseline (erste Saison mit Daten)
+  baselineSaison: number = 1;
+
+  constructor(private storage: StorageService, private route: ActivatedRoute, private router: Router) {}
 
   ngOnInit() {
-    this.loadData();
+    // Gilde aus Route-Parameter laden
+    this.route.params.subscribe(params => {
+      if (params['name']) {
+        this.aktuelleGilde = params['name'];
+        this.storage.setAktuelleGilde(this.aktuelleGilde);
+      } else {
+        this.aktuelleGilde = this.storage.getAktuelleGilde();
+      }
+      this.loadData();
+    });
+
+    // Alle Gilden laden
+    this.loadGilden();
+  }
+
+  loadGilden() {
+    this.storage.getAlleGilden().subscribe({
+      next: (gilden) => {
+        this.alleGilden = gilden.length > 0 ? gilden : ['default'];
+        if (!this.alleGilden.includes(this.aktuelleGilde)) {
+          this.aktuelleGilde = this.alleGilden[0];
+          this.storage.setAktuelleGilde(this.aktuelleGilde);
+          this.loadData();
+        }
+      },
+      error: (err) => {
+        console.error('Fehler beim Laden der Gilden', err);
+        this.alleGilden = ['default'];
+        this.aktuelleGilde = 'default';
+      }
+    });
+  }
+
+  waehleGilde(gildeName: string) {
+    this.aktuelleGilde = gildeName;
+    this.storage.setAktuelleGilde(gildeName);
+    this.showGildenMenu = false;
+    this.router.navigate(['/gilde', gildeName, 'ergebnisse']);
   }
 
   loadData() {
+
+    this.rundenDetails.clear();
+
     forkJoin({
-      saison: this.storage.getAktuelleSaison(),
-      saisons: this.storage.getAlleSaisons(),
-      runden: this.storage.getRunden(),
-      rangliste: this.storage.getRangliste()
+      saisons: this.storage.getAlleSaisons()
     }).subscribe({
+
       next: (result) => {
-        this.aktuelleSaison = result.saison.saison;
+
         this.alleSaisons = result.saisons;
 
-        // Runden mit korrekter Runden-ID speichern
-        this.daten.runden = result.runden.map((r) => ({
-          gewinnzahl: r.gewinnzahl,
-          tipps: [],
-          rundenNummer: r.runde  // Verwende die tatsächliche Rundennummer aus der DB
-        }))
-          .sort((a, b) => a.rundenNummer - b.rundenNummer);;
+        this.aktuelleSaison =
+          this.alleSaisons.length
+            ? Math.max(...this.alleSaisons)
+            : 1;
 
-        // Rangliste in das alte Format konvertieren
-        this.daten.rangliste = result.rangliste.map(r => ({
-          name: r.name,
-          gesamtpunkte: r.gesamtpunkte,
-          gesamtabweichung: r.gesamtabweichung
-        }));
+        this.baselineSaison =
+          this.alleSaisons.length
+            ? Math.min(...this.alleSaisons)
+            : 1;
 
-        // Rangänderungen berechnen
-        this.berechneRangaenderungen();
-
-        if (this.daten.runden.length > 0) {
-          this.angezeigteRundeIndex = this.daten.runden.length - 1;
-          this.ladeRundenDetails(this.angezeigteRundeIndex);
-        }
+        // Jetzt richtige Saison laden
+        this.ladeSaison(this.aktuelleSaison);
       },
-      error: (err) => console.error('Fehler beim Laden der Daten', err)
+
+      error: err =>
+        console.error('Fehler beim Laden', err)
     });
   }
 
@@ -71,6 +110,9 @@ export class ErgebnisseComponent implements OnInit {
       next: (result) => {
         this.aktuelleSaison = saison;
         this.rundenDetails.clear();
+        if (this.baselineSaison === 1 && saison > 1) {
+          this.baselineSaison = saison;
+        }
 
         // Runden mit korrekter Runden-ID speichern
         this.daten.runden = result.runden.map((r) => ({
@@ -139,6 +181,10 @@ export class ErgebnisseComponent implements OnInit {
       return this.daten.runden[this.angezeigteRundeIndex];
     }
     return null;
+  }
+
+  get displaySaison(): number {
+    return this.aktuelleSaison - (this.baselineSaison - 1);
   }
 
   vorherigeRunde() {

@@ -33,6 +33,10 @@ export interface SaisonInfo {
   saison: number;
 }
 
+export interface GildeInfo {
+  name: string;
+}
+
 export interface RundeResponse {
   runde: number;
   gewinnzahl: number;

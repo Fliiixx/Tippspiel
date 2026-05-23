@@ -3,7 +3,12 @@ import { TippEingabeComponent } from './tipp-eingabe/tipp-eingabe.component';
 import { ErgebnisseComponent } from './ergebnisse/ergebnisse.component';
 
 export const routes: Routes = [
-  { path: '', redirectTo: '/ergebnisse', pathMatch: 'full' },
-  { path: 'tipp-eingabe', component: TippEingabeComponent },
-  { path: 'ergebnisse', component: ErgebnisseComponent },
+  {
+    path: 'gilde/:name',
+    children: [
+      { path: 'ergebnisse', component: ErgebnisseComponent },
+      { path: 'tipp-eingabe', component: TippEingabeComponent },
+      { path: '', redirectTo: 'ergebnisse', pathMatch: 'full' }
+    ]
+  }
 ];

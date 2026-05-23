@@ -4,6 +4,7 @@ import { StorageService } from '../services/storage.service';
 import {DecimalPipe, NgForOf, NgIf} from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
   selector: 'app-tipp-eingabe',
@@ -19,18 +20,67 @@ export class TippEingabeComponent implements OnInit {
   letzterGewinner: Tipp | null = null;
   punkteSchema = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
   aktuelleSaison = 1;
+  alleSaisons: number[] = [];
 
   // Passwortschutz
   istFreigeschaltet = false;
   passwortEingabe = '';
-  private readonly korrektePasswort = 'Mond';
+  private korrektePasswort = 'Mond';
   private readonly localStorageKey = 'tippspiel_auth';
 
-  constructor(private storage: StorageService) {}
+  // Gilden-Verwaltung
+  alleGilden: string[] = [];
+  aktuelleGilde: string = 'default';
+  showGildenMenu = false;
+
+  // Saison-Baseline (erste Saison mit Daten)
+  baselineSaison: number = 1;
+
+  constructor(private storage: StorageService, private route: ActivatedRoute, private router: Router) {}
 
   ngOnInit() {
-    this.pruefeLocalStorage();
-    this.loadData();
+    // Gilde aus Route-Parameter laden
+    this.route.params.subscribe(params => {
+      if (params['name']) {
+        this.aktuelleGilde = params['name'];
+        this.storage.setAktuelleGilde(this.aktuelleGilde);
+      } else {
+        this.aktuelleGilde = this.storage.getAktuelleGilde();
+      }
+      this.storage.getGildenPasswort().subscribe(passwort => {
+        this.korrektePasswort = passwort;
+      });
+      this.pruefeLocalStorage();
+      this.loadData();
+    });
+
+    // Alle Gilden laden
+    this.loadGilden();
+  }
+
+  loadGilden() {
+    this.storage.getAlleGilden().subscribe({
+      next: (gilden) => {
+        this.alleGilden = gilden.length > 0 ? gilden : ['default'];
+        if (!this.alleGilden.includes(this.aktuelleGilde)) {
+          this.aktuelleGilde = this.alleGilden[0];
+          this.storage.setAktuelleGilde(this.aktuelleGilde);
+          this.loadData();
+        }
+      },
+      error: (err) => {
+        console.error('Fehler beim Laden der Gilden', err);
+        this.alleGilden = ['default'];
+        this.aktuelleGilde = 'default';
+      }
+    });
+  }
+
+  waehleGilde(gildeName: string) {
+    this.aktuelleGilde = gildeName;
+    this.storage.setAktuelleGilde(gildeName);
+    this.showGildenMenu = false;
+    this.router.navigate(['/gilde', gildeName, 'tipp-eingabe']);
   }
 
   private pruefeLocalStorage() {
@@ -41,6 +91,7 @@ export class TippEingabeComponent implements OnInit {
   }
 
   passwortPruefen() {
+
     if (this.passwortEingabe === this.korrektePasswort) {
       this.istFreigeschaltet = true;
       localStorage.setItem(this.localStorageKey, this.passwortEingabe);
@@ -52,33 +103,41 @@ export class TippEingabeComponent implements OnInit {
   }
 
   private loadData() {
-    this.storage.getAktuelleSaison().subscribe({
-      next: (saisonResult) => {
-        this.aktuelleSaison = saisonResult.saison;
 
-        // Jetzt Rangliste und Runden für die aktuelle Saison laden
+    forkJoin({
+      erste: this.storage.getErsterVerfuegbareSaison(),
+      letzte: this.storage.getAktuellsteVerfuegbareSaison(),
+      saisons: this.storage.getAlleSaisons()
+    }).subscribe({
+
+      next: (meta) => {
+
+        this.baselineSaison = meta.erste;
+        this.aktuelleSaison = meta.letzte;
+        this.alleSaisons = meta.saisons.sort((a,b)=>a-b);
+
         forkJoin({
           rangliste: this.storage.getRangliste(this.aktuelleSaison),
           runden: this.storage.getRunden(this.aktuelleSaison)
         }).subscribe({
+
           next: (result) => {
+
             this.daten.rangliste = result.rangliste.map(r => ({
               name: r.name,
               gesamtpunkte: r.gesamtpunkte,
               gesamtabweichung: r.gesamtabweichung
             }));
+
             this.daten.runden = result.runden;
-            this.updateTippTextWithPlayerNames();
-          },
-          error: (err) => {
-            console.error('Fehler beim Laden der Daten', err);
+
             this.updateTippTextWithPlayerNames();
           }
+
         });
-      },
-      error: (err) => {
-        console.error('Fehler beim Laden der Saison', err);
+
       }
+
     });
   }
 
@@ -176,7 +235,7 @@ export class TippEingabeComponent implements OnInit {
     this.storage.speichereRunde(gewinnzahl, tipps).subscribe({
       next: (response) => {
         console.log('Runde erfolgreich gespeichert:', response);
-        alert(`Runde ${response.runde} (Saison ${response.saison}) erfolgreich gespeichert!`);
+        alert(`Runde ${response.runde} (Saison ${this.displaySaison}) in Gilde "${response.gilde}" erfolgreich gespeichert!`);
 
         // Daten neu laden
         this.loadData();
@@ -208,7 +267,7 @@ export class TippEingabeComponent implements OnInit {
     this.storage.letzteRundeLoeschen().subscribe({
       next: (response) => {
         console.log('Letzte Runde gelöscht:', response);
-        alert(`Runde ${response.geloeschteRunde} wurde erfolgreich gelöscht.`);
+        alert(`Runde ${response.geloeschteRunde} wurde erfolgreich aus Gilde "${response.gilde}" gelöscht.`);
         this.loadData()
 
       },
@@ -227,6 +286,28 @@ export class TippEingabeComponent implements OnInit {
       console.error('Fehler beim Lesen der Zwischenablage:', err);
       alert('Konnte nicht aus der Zwischenablage lesen. Bitte manuell einfügen (Strg+V).');
     }
+  }
+
+  get displaySaison(): number {
+    return this.aktuelleSaison - (this.baselineSaison - 1);
+  }
+
+  ladeSaison(saison: number) {
+    this.aktuelleSaison = saison;
+    this.storage.getRangliste(this.aktuelleSaison).subscribe({
+      next: (result) => {
+        this.daten.rangliste = result.map(r => ({
+          name: r.name,
+          gesamtpunkte: r.gesamtpunkte,
+          gesamtabweichung: r.gesamtabweichung
+        }));
+        this.updateTippTextWithPlayerNames();
+      },
+      error: (err) => {
+        console.error('Fehler beim Laden der Rangliste für Saison', saison, err);
+        this.updateTippTextWithPlayerNames();
+      }
+    });
   }
 
 }
