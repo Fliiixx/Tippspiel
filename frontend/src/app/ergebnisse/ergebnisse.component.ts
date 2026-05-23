@@ -222,18 +222,23 @@ export class ErgebnisseComponent implements OnInit {
     const startDatum = new Date('2025-07-31');
     const wochenProSaison = 12;
 
-    const startWoche = (saison - 1) * wochenProSaison;
-    const endWoche = saison * wochenProSaison - 1;
+    // 🔥 WICHTIG: zurückrechnen auf echte Saison-ID
+    const echteSaison = saison + (this.baselineSaison + 1);
 
     const saisonStart = new Date(startDatum);
-    saisonStart.setDate(saisonStart.getDate() + (startWoche * 7));
+    saisonStart.setDate(
+      saisonStart.getDate() + (echteSaison - 1) * wochenProSaison * 7
+    );
 
-    const saisonEnde = new Date(startDatum);
-    saisonEnde.setDate(saisonEnde.getDate() + (endWoche * 7) + 6);
+    const saisonEnde = new Date(saisonStart);
+    saisonEnde.setDate(saisonEnde.getDate() + wochenProSaison * 7 - 1);
 
-    const formatDatum = (datum: Date) => {
-      return datum.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    };
+    const formatDatum = (datum: Date) =>
+      datum.toLocaleDateString('de-DE', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
 
     return `${formatDatum(saisonStart)} - ${formatDatum(saisonEnde)}`;
   }
