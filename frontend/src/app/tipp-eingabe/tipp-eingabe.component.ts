@@ -228,10 +228,27 @@ export class TippEingabeComponent implements OnInit {
       return a.name.localeCompare(b.name);
     });
 
-    // Platz und Punkte zuweisen
+    // Platz und Punkte zuweisen (gleiche Abweichung = gleicher Platz + gleiche Punkte)
+    let letzterPlatz = 0;
+    let letzteAbweichung: number | null = null;
+    let letztePunkte = 0;
+
     tipps.forEach((t, idx) => {
-      t.platz = idx + 1;
-      t.punkte = this.punkteSchema[idx] || 0;
+
+      if (letzteAbweichung !== null && t.abweichung === letzteAbweichung) {
+        // gleiche Abweichung → gleicher Platz + gleiche Punkte
+        t.platz = letzterPlatz;
+        t.punkte = letztePunkte;
+      } else {
+        // neue Abweichung → neuer Platz
+        t.platz = idx + 1;
+        t.punkte = this.punkteSchema[idx] || 0;
+
+        letzterPlatz = t.platz;
+        letztePunkte = t.punkte;
+        letzteAbweichung = t.abweichung;
+      }
+
     });
 
     // Letzter Gewinner
