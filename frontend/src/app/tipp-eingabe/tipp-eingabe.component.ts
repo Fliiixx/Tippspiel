@@ -171,7 +171,7 @@ export class TippEingabeComponent implements OnInit {
 
     // 2. Tipps parsen
     const lines = this.tippText
-      .split('\n')
+      .split(/\r\n|\n|\r/)
       .map(l => l.trim())
       .filter(l => l.length > 0)
       .filter(l => /[0-9]+(?:[.,][0-9]+)?\s*%?$/.test(l));
@@ -270,7 +270,7 @@ export class TippEingabeComponent implements OnInit {
     this.storage.letzteRundeLoeschen(this.aktuelleSaison).subscribe({
       next: (response) => {
         console.log('Letzte Runde gelöscht:', response);
-        alert(`Runde ${response.geloeschteRunde} (Saison ${this.aktuelleSaison} wurde erfolgreich aus Gilde "${response.gilde}" gelöscht.`);
+        alert(`Runde ${response.geloeschteRunde} (Saison ${this.aktuelleSaison}) wurde erfolgreich aus Gilde "${response.gilde}" gelöscht.`);
         this.loadData()
 
       },
