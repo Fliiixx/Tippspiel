@@ -238,7 +238,7 @@ export class TippEingabeComponent implements OnInit {
     this.storage.speichereRunde(gewinnzahl, tipps, this.aktuelleSaison).subscribe({
       next: (response) => {
         console.log('Runde erfolgreich gespeichert:', response);
-        alert(`Runde ${response.runde} (Saison ${this.displaySaison}) in Gilde "${response.gilde}" erfolgreich gespeichert!`);
+        alert(`Runde ${response.runde} (Saison ${this.aktuelleSaison}) in Gilde "${response.gilde}" erfolgreich gespeichert!`);
 
         // Daten neu laden
         this.loadData();
@@ -270,7 +270,7 @@ export class TippEingabeComponent implements OnInit {
     this.storage.letzteRundeLoeschen(this.aktuelleSaison).subscribe({
       next: (response) => {
         console.log('Letzte Runde gelöscht:', response);
-        alert(`Runde ${response.geloeschteRunde} wurde erfolgreich aus Gilde "${response.gilde}" gelöscht.`);
+        alert(`Runde ${response.geloeschteRunde} (Saison ${this.aktuelleSaison} wurde erfolgreich aus Gilde "${response.gilde}" gelöscht.`);
         this.loadData()
 
       },
