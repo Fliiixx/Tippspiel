@@ -33,6 +33,8 @@ export class TippEingabeComponent implements OnInit {
   aktuelleGilde: string = 'default';
   showGildenMenu = false;
 
+  naechsteSaison: number | null = null;
+
   constructor(private storage: StorageService, private route: ActivatedRoute, private router: Router) {}
 
   ngOnInit() {
@@ -112,10 +114,11 @@ export class TippEingabeComponent implements OnInit {
         this.aktuelleSaison = meta.letzte;
         this.alleSaisons = meta.saisons.sort((a,b)=>a-b);
 
-        let x = this.getNaechsteSaison();
+        this.naechsteSaison = this.getNaechsteSaison();
 
-        if(x){
-          this.alleSaisons.push(x);
+        if (this.naechsteSaison) {
+          this.alleSaisons.push(this.naechsteSaison);
+          this.aktuelleSaison = this.naechsteSaison;
         }
 
         forkJoin({
@@ -338,6 +341,10 @@ export class TippEingabeComponent implements OnInit {
     const existiert = this.alleSaisons.includes(aktuelle);
 
     return existiert ? null : aktuelle;
+  }
+
+  istNeueSaison(saison: number): boolean {
+    return saison === this.naechsteSaison;
   }
 
 }
