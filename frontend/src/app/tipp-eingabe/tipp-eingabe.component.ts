@@ -220,7 +220,7 @@ export class TippEingabeComponent implements OnInit {
     }
 
     // Abweichungen berechnen
-    tipps.forEach((t) => (t.abweichung = Math.abs(t.zahl - gewinnzahl)));
+    tipps.forEach((t) => (t.abweichung = Number(Math.abs(t.zahl - gewinnzahl).toFixed(2))));
 
     // Sortieren nach Abweichung, dann nach Name
     tipps.sort((a, b) => {
