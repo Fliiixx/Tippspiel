@@ -27,8 +27,10 @@ export class ErgebnisseComponent implements OnInit {
   aktuelleSaison!: number;
 
   angezeigteRundeIndex = -1;
+  angezeigteRundeNummer: number | null = null;
 
   rundenCache: Map<number, any[]> = new Map();
+  ranglisteCache: Map<number, Spieler[]> = new Map();
   preise: number[] = [];
 
   constructor(
@@ -40,33 +42,68 @@ export class ErgebnisseComponent implements OnInit {
   // ================= INIT =================
 
   ngOnInit() {
-    this.route.params.subscribe(params => {
-      this.aktuelleGilde = params['name'] || this.storage.getAktuelleGilde();
-      this.storage.setAktuelleGilde(this.aktuelleGilde);
+    let previousGilde: string | null = null;
+    let previousSaison: number | null = null;
 
-      this.loadInitialData();
+    this.route.params.subscribe(params => {
+      const currentGilde = params['gildenname'] || params['name'] || this.storage.getAktuelleGilde();
+      const currentSaison = params['saison'] ? parseInt(params['saison'], 10) : null;
+      const requestedRunde = params['runde'] ? parseInt(params['runde'], 10) : null;
+
+      // Nur laden, wenn sich Gilde oder Saison ändert, nicht wenn sich nur die Runde ändert
+      const gildeChanged = previousGilde !== currentGilde;
+      const saisonChanged = previousSaison !== currentSaison;
+
+      if (gildeChanged || saisonChanged) {
+        this.aktuelleGilde = currentGilde;
+        this.storage.setAktuelleGilde(this.aktuelleGilde);
+
+        // Lade Daten neu wenn Gilde oder Saison sich ändert
+        this.loadInitialData(currentSaison, requestedRunde);
+
+        previousGilde = currentGilde;
+        previousSaison = currentSaison;
+      } else if (requestedRunde !== null) {
+        // Wenn nur die Runde sich ändert, wechsle nur die Runde
+        this.navigateToRunde(requestedRunde);
+      }
     });
 
     this.storage.getPreise().subscribe(p => this.preise = p);
   }
 
+  private navigateToRunde(rundeNummer: number) {
+    const index = this.daten.runden.findIndex(r => r.rundenNummer === rundeNummer);
+    if (index >= 0) {
+      this.angezeigteRundeIndex = index;
+      this.angezeigteRundeNummer = rundeNummer;
+      this.loadRundeDetails(index);
+    }
+  }
+
   // ================= DATA LOADING =================
 
-  private loadInitialData() {
+  private loadInitialData(requestedSaison: number | null, requestedRunde: number | null) {
     this.loadGilden();
 
     this.storage.getAlleSaisons().subscribe({
       next: (saisons) => {
         this.alleSaisons = saisons;
 
+        let saisonToLoad: number;
+
         if (saisons.length === 0) {
-          this.aktuelleSaison = this.storage.getAktuelleSaisonNumber();
-          return;
+          saisonToLoad = this.storage.getAktuelleSaisonNumber();
+        } else {
+          saisonToLoad = requestedSaison && saisons.includes(requestedSaison)
+            ? requestedSaison
+            : Math.max(...saisons);
         }
 
-        this.aktuelleSaison = Math.max(...saisons);
+        this.aktuelleSaison = saisonToLoad;
 
-        this.loadSaison(this.aktuelleSaison);
+        // Beim initialen Load die Rangliste laden (loadRangliste: true)
+        this.loadSaison(saisonToLoad, requestedRunde, true);
       },
       error: (err) => console.error('Saison-Load Fehler', err)
     });
@@ -87,40 +124,77 @@ export class ErgebnisseComponent implements OnInit {
 
   // ================= SAISON =================
 
-  loadSaison(saison: number) {
+  loadSaison(saison: number, requestedRunde: number | null = null, loadRangliste: boolean = false) {
     this.aktuelleSaison = saison;
 
-    forkJoin({
-      runden: this.storage.getRunden(saison),
-      rangliste: this.storage.getRangliste(saison)
-    }).subscribe({
-      next: (res) => {
+    // Wenn Rangliste im Cache ist oder wir sie nicht laden wollen, nur Runden laden
+    if (!loadRangliste && this.ranglisteCache.has(saison)) {
+      this.daten.rangliste = this.ranglisteCache.get(saison)!;
+      this.loadRundenFuerSaison(saison, requestedRunde, false);
+    } else if (loadRangliste) {
+      // Lade beide: Runden und Rangliste
+      forkJoin({
+        runden: this.storage.getRunden(saison),
+        rangliste: this.storage.getRangliste(saison)
+      }).subscribe({
+        next: (res) => {
+          // Cache die Rangliste
+          const rangliste = res.rangliste;
+          this.ranglisteCache.set(saison, rangliste);
+          this.daten.rangliste = rangliste;
 
-        // Runden normalisieren
-        this.daten.runden = res.runden
-          .map(r => ({
-            rundenNummer: r.runde,
-            gewinnzahl: r.gewinnzahl,
-            tipps: [],
-            saison
-          }))
-          .sort((a, b) => a.rundenNummer - b.rundenNummer);
+          this.processRundenData(res.runden, saison, requestedRunde, true);
+        },
+        error: (err) => console.error('Saison Load Fehler', err)
+      });
+    } else {
+      // Rangliste nicht im Cache und nicht angefordert - nur Runden laden
+      this.loadRundenFuerSaison(saison, requestedRunde, false);
+    }
+  }
 
-        this.daten.rangliste = res.rangliste;
-
-        this.rundenCache.clear();
-
-        this.angezeigteRundeIndex =
-          this.daten.runden.length ? this.daten.runden.length - 1 : -1;
-
-        this.berechneRangaenderungen();
-
-        if (this.angezeigteRundeIndex >= 0) {
-          this.loadRundeDetails(this.angezeigteRundeIndex);
-        }
+  private loadRundenFuerSaison(saison: number, requestedRunde: number | null, shouldCalculateRangliste: boolean) {
+    this.storage.getRunden(saison).subscribe({
+      next: (runden) => {
+        this.processRundenData(runden, saison, requestedRunde, shouldCalculateRangliste);
       },
-      error: (err) => console.error('Saison Load Fehler', err)
+      error: (err) => console.error('Runden Load Fehler', err)
     });
+  }
+
+  private processRundenData(runden: any[], saison: number, requestedRunde: number | null, shouldCalculateRangliste: boolean = false) {
+    // Runden normalisieren
+    this.daten.runden = runden
+      .map(r => ({
+        rundenNummer: r.runde,
+        gewinnzahl: r.gewinnzahl,
+        tipps: [],
+        saison
+      }))
+      .sort((a, b) => a.rundenNummer - b.rundenNummer);
+
+    this.rundenCache.clear();
+
+    // Stelle die richtige Runde ein basierend auf requestedRunde oder neueste
+    if (requestedRunde !== null) {
+      const index = this.daten.runden.findIndex(r => r.rundenNummer === requestedRunde);
+      this.angezeigteRundeIndex = index >= 0 ? index : (this.daten.runden.length ? this.daten.runden.length - 1 : -1);
+      this.angezeigteRundeNummer = requestedRunde;
+    } else {
+      this.angezeigteRundeIndex =
+        this.daten.runden.length ? this.daten.runden.length - 1 : -1;
+      this.angezeigteRundeNummer = this.angezeigteRunde?.rundenNummer ?? null;
+    }
+
+    // Nur Rangänderungen berechnen, wenn die Rangliste neu geladen wurde
+    if (shouldCalculateRangliste) {
+      this.berechneRangaenderungen();
+    }
+
+    if (this.angezeigteRundeIndex >= 0) {
+      this.loadRundeDetails(this.angezeigteRundeIndex);
+      this.updateRouteParams();
+    }
   }
 
   // ================= RUNDE DETAILS =================
@@ -162,6 +236,7 @@ export class ErgebnisseComponent implements OnInit {
     if (this.angezeigteRundeIndex > 0) {
       this.angezeigteRundeIndex--;
       this.loadRundeDetails(this.angezeigteRundeIndex);
+      this.updateRouteParams();
     }
   }
 
@@ -169,6 +244,16 @@ export class ErgebnisseComponent implements OnInit {
     if (this.angezeigteRundeIndex < this.daten.runden.length - 1) {
       this.angezeigteRundeIndex++;
       this.loadRundeDetails(this.angezeigteRundeIndex);
+      this.updateRouteParams();
+    }
+  }
+
+  private updateRouteParams() {
+    if (this.angezeigteRunde && this.angezeigteRunde.rundenNummer) {
+      this.router.navigate(
+        ['/gilde', this.aktuelleGilde, 'saison', this.aktuelleSaison, 'runde', this.angezeigteRunde.rundenNummer],
+        { replaceUrl: true }
+      );
     }
   }
 
@@ -208,7 +293,7 @@ export class ErgebnisseComponent implements OnInit {
     this.aktuelleGilde = name;
     this.storage.setAktuelleGilde(name);
     this.showGildenMenu = false;
-    this.router.navigate(['/gilde', name, 'ergebnisse']);
+    this.router.navigate(['/gilde', name, 'saison']);
   }
 
 
